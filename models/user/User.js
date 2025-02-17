@@ -44,20 +44,68 @@ UserSchema.statics.createUser = function (data, callback) {
   if(!data.telegram_username || typeof data.telegram_username != 'string')
     return callback('bad_request');
 }
-UserSchema.statics.findUserById = function (data, callback) {
+UserSchema.statics.findUserById = function (id, callback) {
+  if (!id || !validator.isMongoId(id.toString()))
+    return callback('bad_request');
 
+  User.findById(id, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('document_not_found');
+
+    return callback(null, user);
+  });
 }
-UserSchema.statics.findUserByIdAndFormat = function (data, callback) {
+UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
+  if (!id || !validator.isMongoId(id.toString()))
+    return callback('bad_request');
 
+  User.findUserById(id, (err, user) => {
+    if (err) return callback(err);
+
+    getUser(user, (err, user) => {
+      if (err) return callback(err);
+
+      return callback(null, user);
+    });
+  });
 }
-UserSchema.statics.findUserByIdAndUpdate = function (data, callback) {
+UserSchema.statics.findUserByIdAndBan = function (id, callback) {
+  if (!id || !validator.isMongoId(id.toString()))
+    return callback('bad_request');
 
-}
-UserSchema.statics.findUserByIdAndDelete = function (data, callback) {
+  User.findByIdAndUpdate(id, {$set: {
+    is_banned: true
+  }}, { new: true }, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('document_not_found');
 
-}
-UserSchema.statics.findUserByFilters = function (data, callback) {
+    getUser(user, (err, user) => {
+      if (err) return callback(err);
 
-}
+      return callback(null, user);
+    });
+  });
+};
+UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
+  if (!id || !validator.isMongoId(id.toString()))
+    return callback('bad_request');
 
-export const Wallet = mongoose.model('Wallet', UserSchema);
+  User.findOneAndDelete({ _id: id }, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('document_not_found');
+
+    return callback(null);
+  })
+};
+UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
+  if (!publicKey || typeof publicKey !== 'string' || !validator.isUUID(publicKey))
+    return callback('bad_request');
+
+  User.findOne({ chopin_public_key: publicKey }, (err, user) => {
+    if (err) return callback(err);
+    if (!user) return callback('user_not_found');
+    return callback(null, user);
+  });
+};
+
+export const User = mongoose.model('User', UserSchema);
