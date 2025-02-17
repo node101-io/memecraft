@@ -4,6 +4,7 @@ import validator from 'validator';
 const getUser = require('./functions/getUser');
 
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
+const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 
 const UserSchema = new mongoose.Schema({
@@ -43,7 +44,25 @@ UserSchema.statics.createUser = function (data, callback) {
     return callback('bad_request');
   if(!data.telegram_username || typeof data.telegram_username != 'string')
     return callback('bad_request');
-}
+
+  const newUserData = {
+    telegram_id: data.telegram_id,
+    chopin_public_key: data.chopin_public_key,
+    telegram_username: data.telegram_username,
+  }
+  const newUser = new User(newUserData);
+
+  newUser.save((err, user) => {
+    if (err) {
+      if (err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+        return callback('duplicated_unique_field');
+
+      return callback('database_error');
+    };
+
+    return callback(null, user);
+  });
+};
 UserSchema.statics.findUserById = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
