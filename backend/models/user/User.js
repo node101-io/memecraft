@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
+import Meme from '../meme/Meme';
 
 const getUser = require('./functions/getUser');
 
@@ -67,6 +68,55 @@ UserSchema.statics.createUser = function (data, callback) {
     };
 
     return callback(null, user);
+  });
+};
+UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
+  if (!userId || !validator.isMongoId(userId.toString()))
+    return callback('bad_request');
+
+  User.findById(userId, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('user_not_found');
+
+    const timeoutDuration = 24 * 60 * 60 * 1000;
+    if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < timeoutDuration)) {
+      return callback('user_timed_out');
+    }
+
+    if (!memeData || typeof memeData !== 'object')
+      return callback('bad_request');
+    if (!memeData.description || typeof memeData.description !== 'string')
+      return callback('bad_request');
+    if (!memeData.content_url || typeof memeData.content_url !== 'string')
+      return callback('bad_request');
+    if (!memeData.mint_price || typeof memeData.mint_price !== 'number')
+      return callback('bad_request');
+
+    const newMeme = new Meme({
+      creator: userId,
+      description: memeData.description,
+      content_url: memeData.content_url,
+      mint_price: memeData.mint_price
+    });
+
+    newMeme.save((err, meme) => {
+      if (err) {
+        if (err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+          return callback('duplicated_unique_field');
+        return callback('database_error');
+      }
+
+      User.findByIdAndUpdate(
+        userId,
+        { $push: { minted_memes: meme._id } },
+        { new: true },
+        (err, updatedUser) => {
+          if (err) return callback('database_error');
+
+          return callback(null, meme);
+        }
+      );
+    });
   });
 };
 UserSchema.statics.findUserById = function (id, callback) {

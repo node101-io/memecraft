@@ -1,3 +1,4 @@
+// User -> Meme one to many
 import mongoose from 'mongoose';
 import validator from 'validator';
 
@@ -45,37 +46,7 @@ const MemeSchema = new mongoose.Schema({
   }
 });
 
-MemeSchema.statics.createMeme = function (data, callback) {
-  if(!data || typeof data !== 'object')
-    return callback('bad_request');
-  if(!data.creator || !validator.isMongoId(data.creator.toString()))
-    return callback('bad_request');
-  if(!data.description || typeof data.description != 'string')
-    return callback('bad_request');
-  if(!data.content_url || typeof data.content_url != 'string')
-    return callback('bad_request');
-  if(!data.mint_price || typeof data.mint_price != 'number')
-    return callback('bad_request');
-
-  const newMemeData = {
-    creator: data.creator,
-    description: data.description,
-    content_url: data.content_url,
-    mint_price: data.mint_price
-  }
-  const newMeme = new Meme(newMemeData);
-
-  newMeme.save((err, meme) => {
-    if (err) {
-      if (err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-        return callback('duplicated_unique_field');
-
-      return callback('database_error');
-    };
-
-    return callback(null, meme);
-  });
-};
+//create meme inside the user model
 
 MemeSchema.statics.findMemeById = function (id, callback){
   if (!id || !validator.isMongoId(id.toString()))
