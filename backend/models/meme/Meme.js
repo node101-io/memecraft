@@ -4,10 +4,14 @@ import validator from 'validator';
 const getMeme = require('./functions/getUser');
 
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
+const MAX_MEME_MINT_PRICE = 1e6;
+const MAX_TAGS_ARRAY_LENGTH = 1e4;
+
+const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const MemeSchema = new mongoose.Schema({
-  owner: {
-    type: String, // user.telegram_id
+  creator: {
+    type: mongoose.Types.ObjectId, // user.telegram_id
     required: true,
     trim: true,
     unique: true,
@@ -18,25 +22,42 @@ const MemeSchema = new mongoose.Schema({
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   tag: {
-    type: [String],
+    type: Array[String],
+    default: [],
+    validate: {
+      validator: function(arr) {
+        return arr.length <= MAX_TAGS_ARRAY_LENGTH;
+      },
+    }
   },
-  metadata: {
-    type: Object,
-    default: {},
+  content_url: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
+  },
+  mint_price: {
+    type: Number,
+    required: true,
+    trim: true,
+    max: MAX_MEME_MINT_PRICE
   }
 });
 
 MemeSchema.statics.createMeme = function (data, callback) {
   if(!data || typeof data !== 'object')
     return callback('bad_request');
-  if(!data.owner || typeof data.owner != 'string')
+  if(!data.creator || !validator.isMongoId(data.creator.toString()))
     return callback('bad_request');
-  if(!data.metadata || typeof data.metadata != 'object')
+  if(!data.content_url || typeof data.content_url != 'string')
+    return callback('bad_request');
+  if(!data.mint_price || typeof data.mint_price != 'number')
     return callback('bad_request');
 
   const newMemeData = {
-    owner: data.owner,
-    metadata: data.metadata
+    creator: data.creator,
+    content_url: data.content_url,
+    mint_price: data.mint_price
   }
   const newMeme = new Meme(newMemeData);
 
@@ -78,19 +99,15 @@ MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
 MemeSchema.statics.findMemeByFilters = function (data, callback) {
   const filters = [];
 
-  if (data.owner) // (user.telegram_id)
-    filters.push({ owner: data.owner });
+  if (data.creator) // (user.telegram_id)
+    filters.push({ creator: data.creator });
 
   if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
     filters.push({
       tag: { $in: data.tags },
     });
   }
-  if (data.metadata && typeof data.metadata === 'object') {
-    Object.keys(data.metadata).forEach((key) => {
-      filters.push({ [`metadata.${key}`]: data.metadata[key] });
-    });
-  }
+
 
   const skip = data.skip || 0;
   const limit = data.limit || 10;
