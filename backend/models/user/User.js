@@ -22,13 +22,6 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
-  telegram_username: {
-    type: String,
-    trim: true,
-    unique: true,
-    sparse: true,
-    maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH,
-  },
   is_banned: {
     type: Boolean,
     default: false
@@ -42,13 +35,10 @@ UserSchema.statics.createUser = function (data, callback) {
     return callback('bad_request');
   if(!data.chopin_public_key || typeof data.chopin_public_key != 'string' || !validator.isUUID(data.chopin_public_key))
     return callback('bad_request');
-  if(!data.telegram_username || typeof data.telegram_username != 'string')
-    return callback('bad_request');
 
   const newUserData = {
     telegram_id: data.telegram_id,
     chopin_public_key: data.chopin_public_key,
-    telegram_username: data.telegram_username,
   }
   const newUser = new User(newUserData);
 
