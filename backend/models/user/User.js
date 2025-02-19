@@ -1,13 +1,15 @@
+// User -> Meme one to many
+
 import mongoose from 'mongoose';
 import validator from 'validator';
-import Meme from '../meme/Meme';
+import { Meme } from '../meme/Meme';
 
 const getUser = require('./functions/getUser');
 
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
 const MAX_BALANCE_VALUE = 1e9;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
-
+const TIME_OUT_DURATION = 24 * 60 * 60 * 1000;
 
 const UserSchema = new mongoose.Schema({
   telegram_id:{
@@ -74,12 +76,12 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
   if (!userId || !validator.isMongoId(userId.toString()))
     return callback('bad_request');
 
-  User.findById(userId, (err, user) => {
+  User.findById(userId).exec((err, user) => {
     if (err) return callback('database_error');
     if (!user) return callback('user_not_found');
 
-    const timeoutDuration = 24 * 60 * 60 * 1000;
-    if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < timeoutDuration)) {
+ // TODO: move
+    if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < TIME_OUT_DURATION)) {
       return callback('user_timed_out');
     }
 
@@ -203,7 +205,52 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
   });
 };
 UserSchema.statics.purchaseMemesById = function (userId, memeId, callback) {
+  if (!userId || !validator.isMongoId(userId.toString()))
+    return callback('bad_request');
+  if (!memeId || !validator.isMongoId(memeId.toString()))
+    return callback('bad_request');
 
-}
+  User.findById(userId, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('user_not_found');
+
+    Meme.findById(memeId, (err, meme) => {
+      if (err) return callback('database_error');
+      if (!meme) return callback('meme_not_found');
+
+      if (user.balance < meme.mint_price)
+        return callback('insufficient_balance');
+
+      User.findById(meme.creator, (err, creatorUser) => {
+        if (err) return callback('database_error');
+        if (!creatorUser) return callback('creator_not_found');
+
+        User.findByIdAndUpdate(
+          userId,
+          {
+            $inc: { balance: -meme.mint_price },
+            $push: { minted_memes: meme._id }
+          },
+          { new: true },
+          (err, updatedUser) => {
+            if (err) return callback('database_error');
+
+            User.findByIdAndUpdate(
+              meme.creator,
+              { $inc: { balance: meme.mint_price } },
+              { new: true },
+              (err, updatedCreator) => {
+                if (err) return callback('database_error');
+
+                return callback(null, updatedCreator);
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+};
+
 
 export const User = mongoose.model('User', UserSchema);

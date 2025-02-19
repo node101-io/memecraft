@@ -1,4 +1,5 @@
 // User -> Meme one to many
+
 import mongoose from 'mongoose';
 import validator from 'validator';
 

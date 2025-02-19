@@ -1,6 +1,7 @@
 {
   "name": "meme-generator",
   "version": "1.0.0",
+  "type": "module",
   "description": "A meme generator project for Celestia Mammothon",
   "main": "app.js",
   "scripts": {
