@@ -93,7 +93,7 @@ UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
     });
   });
 };
-UserSchema.statics.findUserByIdAndTimeOutUser = function (id, callback) {
+UserSchema.statics.timeOutUserById = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
@@ -110,7 +110,7 @@ UserSchema.statics.findUserByIdAndTimeOutUser = function (id, callback) {
     });
   });
 };
-UserSchema.statics.findUserByIdAndUpdateBalance = function (id, newBalance, callback) {
+UserSchema.statics.updateBalanceById = function (id, newBalance, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
   if (!newBalance || typeof newBalance != 'number' || newBalance > MAX_BALANCE_VALUE || newBalance < 0){
@@ -151,5 +151,8 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
     return callback(null, user);
   });
 };
+UserSchema.statics.purchaseMemesById = function (userId, memeId, callback) {
+
+}
 
 export const User = mongoose.model('User', UserSchema);
