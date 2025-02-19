@@ -4,6 +4,7 @@ import validator from 'validator';
 const getUser = require('./functions/getUser');
 
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
+const MAX_BALANCE_VALUE = 1e9;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 
@@ -22,9 +23,23 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
-  is_banned: {
+  is_time_out: {
     type: Boolean,
     default: false
+  },
+  balance: {
+    type: Number,
+    default: 0,
+    max: MAX_BALANCE_VALUE
+  },
+  minted_memes: {
+    type: Array[Object],
+    default: [],
+    validate: {
+      validator: function(arr) {
+        return arr.length <= MAX_MEMES_ARRAY_LENGTH;
+      },
+    }
   }
 });
 
@@ -63,7 +78,7 @@ UserSchema.statics.findUserById = function (id, callback) {
 
     return callback(null, user);
   });
-}
+};
 UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
@@ -77,13 +92,13 @@ UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
       return callback(null, user);
     });
   });
-}
-UserSchema.statics.findUserByIdAndBan = function (id, callback) {
+};
+UserSchema.statics.findUserByIdAndTimeOutUser = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
   User.findByIdAndUpdate(id, {$set: {
-    is_banned: true
+    is_time_out: true
   }}, { new: true }, (err, user) => {
     if (err) return callback('database_error');
     if (!user) return callback('document_not_found');
@@ -95,6 +110,26 @@ UserSchema.statics.findUserByIdAndBan = function (id, callback) {
     });
   });
 };
+UserSchema.statics.findUserByIdAndUpdateBalance = function (id, newBalance, callback) {
+  if (!id || !validator.isMongoId(id.toString()))
+    return callback('bad_request');
+  if (!newBalance || typeof newBalance != 'number' || newBalance > MAX_BALANCE_VALUE || newBalance < 0){
+    return callback('bad_request');
+  }
+  User.findByIdAndUpdate(id, {$set: {
+    balance: newBalance
+  }}, { new: true }, (err, user) => {
+    if (err) return callback('database_error');
+    if (!user) return callback('document_not_found');
+
+    getUser(user, (err, user) => {
+      if (err) return callback(err);
+
+      return callback(null, user);
+    });
+  });
+
+}
 UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
