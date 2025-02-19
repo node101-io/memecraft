@@ -9,8 +9,6 @@ const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
 const MAX_MEME_MINT_PRICE = 1e6;
 const MAX_TAGS_ARRAY_LENGTH = 1e4;
 
-const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
-
 const MemeSchema = new mongoose.Schema({
   creator: {
     type: mongoose.Types.ObjectId, // user.telegram_id
@@ -53,19 +51,20 @@ MemeSchema.statics.findMemeById = function (id, callback){
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
-  Meme.findById(id, (err, meme) => {
+  Meme.findById(id,)
+  .exec((err, meme) => {
     if (err) return callback('database_error');
     if (!meme) return callback('document_not_found');
 
     return callback(null, meme);
   });
 };
-// MemeSchema.statics.findMemeByIdAndUpdate = function (id, callback) {};
 MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
-  Meme.findOneAndDelete({ _id: id }, (err, meme) => {
+  Meme.findOneAndDelete({ _id: id })
+  .exec((err, meme) => {
     if (err) return callback('database_error');
     if (!meme) return callback('document_not_found');
 
@@ -90,11 +89,18 @@ MemeSchema.statics.findMemeByFilters = function (data) {
   const skip = data.skip || 0;
   const limit = data.limit || 10;
 
-  return Meme.find(filters.length ? { $and: filters } : {})
+  Meme.find(filters.length ? { $and: filters } : {})
     .sort()
     .skip(skip)
     .limit(limit)
-    .exec();
+    .exec((err, meme) => {
+      if(err)
+        return callback ('database_error');
+      if(!meme)
+        return callback('document_not_found');
+
+      return (null, meme);
+    });
 };
 
 export const Meme = mongoose.model('Meme', MemeSchema);
