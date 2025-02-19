@@ -1,38 +1,38 @@
 import 'dotenv/config';
-import { Telegraf } from "telegraf";
-import { Level } from "level";
+import { Telegraf } from 'telegraf';
+import { Level } from 'level';
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const db = new Level("db", { valueEncoding: "json" });
+const db = new Level('db', { valueEncoding: 'json' });
 
 const userMemes = {
   5729713262: [
     {
-      id: "meme1",
-      title: "Doge Meme",
+      id: 'meme1',
+      title: 'Doge Meme',
       gif_url:
-        "https://media3.giphy.com/media/xT0xezQeqQQWRYgZ8k/giphy.gif",
+        'https://media3.giphy.com/media/xT0xezQeqQQWRYgZ8k/giphy.gif',
       thumb_url:
-        "https://media3.giphy.com/media/xT0xezQeqQQWRYgZ8k/giphy.gif",
+        'https://media3.giphy.com/media/xT0xezQeqQQWRYgZ8k/giphy.gif',
     },
     {
-      id: "meme2",
-      title: "Success Kid",
+      id: 'meme2',
+      title: 'Success Kid',
       gif_url:
-        "https://media4.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif",
+        'https://media4.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif',
       thumb_url:
-        "https://media4.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif",
+        'https://media4.giphy.com/media/l3q2K5jinAlChoCLS/giphy.gif',
     },
   ],
   1561831897: [
     {
-      id: "meme3",
-      title: "Drake Hotline Bling",
+      id: 'meme3',
+      title: 'Drake Hotline Bling',
       gif_url:
-        "https://media2.giphy.com/media/xT1XGzAnABSxEg99Zu/giphy.gif",
+        'https://media2.giphy.com/media/xT1XGzAnABSxEg99Zu/giphy.gif',
       thumb_url:
-        "https://media2.giphy.com/media/xT1XGzAnABSxEg99Zu/giphy.gif",
+        'https://media2.giphy.com/media/xT1XGzAnABSxEg99Zu/giphy.gif',
     },
   ],
 };
@@ -65,14 +65,14 @@ async function initializeUserBalances() {
   }
 };
 
-bot.on("message", async (ctx) => {
+bot.on('message', async (ctx) => {
   try {
     if (!ctx.message.web_app_data || !ctx.message.web_app_data.data)
       return;
 
     const data = JSON.parse(ctx.message.web_app_data.data);
 
-    if (data.type !== "balance_update")
+    if (data.type !== 'balance_update')
       return;
 
     const userId = data.user_id;
@@ -84,18 +84,18 @@ bot.on("message", async (ctx) => {
 
     await ctx.reply(`Your balance has been updated to ${newBalance}`);
   } catch (error) {
-    console.error("Error handling web app data:", error);
+    console.error('Error handling web app data:', error);
   };
 });
 
-// // console.log("Bot is running...");
-// import { Telegraf } from "telegraf";
+// // console.log('Bot is running...');
+// import { Telegraf } from 'telegraf';
 
 // const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// const WEB_APP_URL = "https://feathers.studio/telegraf/webapp/example";
+// const WEB_APP_URL = 'https://feathers.studio/telegraf/webapp/example';
 
-bot.on("inline_query", async (ctx) => {
+bot.on('inline_query', async (ctx) => {
   const userId = ctx.from.id;
 
   try {
@@ -108,7 +108,7 @@ bot.on("inline_query", async (ctx) => {
     };
 
     const results = memes.map((meme) => ({
-      type: "gif",
+      type: 'gif',
       id: meme.id,
       gif_url: meme.gif_url,
       thumb_url: meme.thumb_url,
@@ -117,9 +117,9 @@ bot.on("inline_query", async (ctx) => {
 
     await ctx.answerInlineQuery(results, {
       button: {
-        text: "Get more",
+        text: 'Get more',
         web_app: {
-          url: "https://chopin-telegram-test.vercel.app/",
+          url: 'https://chopin-telegram-test.vercel.app/',
         },
       },
       cache_time: 0
@@ -131,45 +131,4 @@ bot.on("inline_query", async (ctx) => {
   }
 });
 
-// bot.on("inline_query", async ctx => {
-//   await ctx.answerInlineQuery([
-//     {
-//       type: "gif",
-//       id: "gif1",
-//       gif_url: "https://media.tenor.com/eFPFHSN4rJ8AAAAM/example.gif",
-//       gif_width: 480,
-//       gif_height: 360,
-//       gif_duration: 5,
-//       thumbnail_url: "https://example.com/thumbnail.jpg",
-//       title: "GIF Başlığı",
-//       caption: "GIF açıklaması",
-//       reply_markup: {
-//         inline_keyboard: [[{ text: "Buton", url: "https://example.com" }]],
-//       },
-//     },
-//     {
-//       type: "gif",
-//       id: "gif2",
-//       gif_url: "https://media.tenor.com/eFPFHSN4rJ8AAAAM/example.gif",
-//       gif_width: 480,
-//       gif_height: 360,
-//       gif_duration: 5,
-//       thumbnail_url: "https://example.com/thumbnail.jpg",
-//       title: "GIF Başlığı",
-//       caption: "GIF açıklaması",
-//       reply_markup: {
-//         inline_keyboard: [[{ text: "Buton", url: "https://example.com" }]],
-//       },
-//     },
-//   ], {
-// 		button: {
-// 		  text: "Launch",
-// 			web_app: {
-// 				url: 'https://feathers.studio/telegraf/webapp/example'
-// 			}
-// 		},
-// 		cache_time: 0
-// 	});
-// });
-
-bot.launch();
+await bot.launch();
