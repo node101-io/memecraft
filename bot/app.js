@@ -42,6 +42,7 @@ const userBalances = {
 };
 
 initializeUserMemes();
+
 initializeUserBalances();
 
 async function initializeUserMemes() {
