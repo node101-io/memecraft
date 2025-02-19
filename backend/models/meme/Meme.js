@@ -19,6 +19,7 @@ const MemeSchema = new mongoose.Schema({
   },
   description: {
     type: String,
+    required: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   tag: {
@@ -49,6 +50,8 @@ MemeSchema.statics.createMeme = function (data, callback) {
     return callback('bad_request');
   if(!data.creator || !validator.isMongoId(data.creator.toString()))
     return callback('bad_request');
+  if(!data.description || typeof data.description != 'string')
+    return callback('bad_request');
   if(!data.content_url || typeof data.content_url != 'string')
     return callback('bad_request');
   if(!data.mint_price || typeof data.mint_price != 'number')
@@ -56,6 +59,7 @@ MemeSchema.statics.createMeme = function (data, callback) {
 
   const newMemeData = {
     creator: data.creator,
+    description: data.description,
     content_url: data.content_url,
     mint_price: data.mint_price
   }
@@ -96,28 +100,29 @@ MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
     return callback(null);
   });
 };
-MemeSchema.statics.findMemeByFilters = function (data, callback) {
+MemeSchema.statics.findMemeByFilters = function (data) {
   const filters = [];
 
-  if (data.creator) // (user.telegram_id)
+  if (data.creator) {
     filters.push({ creator: data.creator });
-
-  if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
-    filters.push({
-      tag: { $in: data.tags },
-    });
   }
 
+  if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+    filters.push({ tags: { $in: data.tags } });
+  }
+
+  if (data.description && typeof data.description === 'string' && data.description.length > 0) {
+    filters.push({ description: { $regex: data.description, $options: 'i' } });
+  }
 
   const skip = data.skip || 0;
   const limit = data.limit || 10;
 
-  Meme.find(filters.length ? { $and: filters } : {})
-  .sort()
-  .skip(skip)
-  .limit(limit)
-  .then((memes) => callback(null, memes))
-  .catch((err) => callback('database_error'));
+  return Meme.find(filters.length ? { $and: filters } : {})
+    .sort()
+    .skip(skip)
+    .limit(limit)
+    .exec();
 };
 
 export const Meme = mongoose.model('Meme', MemeSchema);

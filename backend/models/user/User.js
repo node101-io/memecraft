@@ -24,8 +24,8 @@ const UserSchema = new mongoose.Schema({
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   is_time_out: {
-    type: Boolean,
-    default: false
+    type: Date,
+    default: 0
   },
   balance: {
     type: Number,
@@ -33,13 +33,14 @@ const UserSchema = new mongoose.Schema({
     max: MAX_BALANCE_VALUE
   },
   minted_memes: {
-    type: Array[Object],
+    type: Array,
     default: [],
+    maxlength:MAX_MEMES_ARRAY_LENGTH,
     validate: {
-      validator: function(arr) {
-        return arr.length <= MAX_MEMES_ARRAY_LENGTH;
-      },
-    }
+      validator: function (arr) {
+        return arr.every((item) => typeof item === "object" && item !== null);
+      }
+    },
   }
 });
 
@@ -98,7 +99,7 @@ UserSchema.statics.timeOutUserById = function (id, callback) {
     return callback('bad_request');
 
   User.findByIdAndUpdate(id, {$set: {
-    is_time_out: true
+    is_time_out: Date.now()
   }}, { new: true }, (err, user) => {
     if (err) return callback('database_error');
     if (!user) return callback('document_not_found');
