@@ -2,14 +2,16 @@
 
 import mongoose from 'mongoose';
 import validator from 'validator';
-import { Meme } from '../meme/Meme';
+import { Meme } from '../meme/Meme.js';
 
-const getUser = require('./functions/getUser');
+import { getUser } from './functions/getUser.js';
 
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
 const MAX_BALANCE_VALUE = 1e9;
-const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 const TIME_OUT_DURATION = 24 * 60 * 60 * 1000;
+const MAX_MEMES_ARRAY_LENGTH = 1e6;
+
+const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const UserSchema = new mongoose.Schema({
   telegram_id:{
@@ -50,23 +52,38 @@ const UserSchema = new mongoose.Schema({
 UserSchema.statics.createUser = function (data, callback) {
   if(!data || typeof data !== 'object')
     return callback('bad_request');
+  console.log("1");
   if(!data.telegram_id || typeof data.telegram_id != 'string')
     return callback('bad_request');
-  if(!data.chopin_public_key || typeof data.chopin_public_key != 'string' || !validator.isUUID(data.chopin_public_key))
+  console.log("2");
+  if(!data.chopin_public_key || typeof data.chopin_public_key != 'string') // || !validator.isUUID(data.chopin_public_key))
     return callback('bad_request');
+  console.log("3");
 
   User.create({
     telegram_id: data.telegram_id,
     chopin_public_key: data.chopin_public_key,
   })
-  .exec((err, user) => {
+  // .exec((err, user) => {
+  //   if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+  //     return callback('duplicated_unique_field');
+  //   if (err)
+  //     return callback('database_error');
+
+  //   return callback(null, user);
+  // });
+  .then(user => {
+    return callback(null, user);
+  })
+  .catch(err => {
+    console.log(err);
     if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
       return callback('duplicated_unique_field');
     if (err)
       return callback('database_error');
+  })
 
-    return callback(null, user);
-  });
+
 };
 
 UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {

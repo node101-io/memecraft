@@ -3,8 +3,6 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 
-const getMeme = require('./functions/getUser');
-
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
 const MAX_MEME_MINT_PRICE = 1e6;
 const MAX_TAGS_ARRAY_LENGTH = 1e4;
@@ -23,7 +21,7 @@ const MemeSchema = new mongoose.Schema({
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   tag: {
-    type: Array[String],
+    type: Array,
     default: [],
     validate: {
       validator: function(arr) {

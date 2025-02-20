@@ -1,6 +1,7 @@
-module.exports = (user, callback) => {
-  if (!user || !user._id)
+export const getUser = (user, callback) => {
+  if (!user || !user._id) {
     return callback('document_not_found');
+  }
 
   return callback(null, {
     telegram_id: user.telegram_id,

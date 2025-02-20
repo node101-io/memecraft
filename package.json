@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/node101-io/meme-generator/issues"
   },
-  "homepage": "https://github.com/node101-io/meme-generator#readme"
+  "homepage": "https://github.com/node101-io/meme-generator#readme",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "mongoose": "^8.10.1",
+    "validator": "^13.12.0"
+  }
 }
