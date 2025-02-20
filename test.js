@@ -57,9 +57,15 @@ const memeTestData = {
 //   console.log(user);
 // })
 
-let userToPurchase = "67b77a289dc13871c7e3fc39";
-let memeId = "67b77a87d5b8306777e509e5"
-User.purchaseMemeById(userToPurchase, memeId, (err) => {
-  if(err) return console.log(err);
-  console.log("hato purchase deneme")
-})
+// let userToPurchase = "67b77a289dc13871c7e3fc39";
+// let memeId = "67b77a87d5b8306777e509e5"
+// User.purchaseMemeById(userToPurchase, memeId, (err) => {
+//   if(err) return console.log(err);
+// })
+
+
+// Meme.findMemeByFilters( { creator : "67b77a87d5b8306777e509e5" } ,  (err, meme) => {
+//   if(err) return console.log(err);
+
+//   console.log(meme);
+// })

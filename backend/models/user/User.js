@@ -52,13 +52,10 @@ const UserSchema = new mongoose.Schema({
 UserSchema.statics.createUser = function (data, callback) {
   if(!data || typeof data !== 'object')
     return callback('bad_request');
-  console.log("1");
   if(!data.telegram_id || typeof data.telegram_id != 'string')
     return callback('bad_request');
-  console.log("2");
   if(!data.chopin_public_key || typeof data.chopin_public_key != 'string') // || !validator.isUUID(data.chopin_public_key))
     return callback('bad_request');
-  console.log("3");
 
   User.create({
     telegram_id: data.telegram_id,
@@ -79,7 +76,6 @@ UserSchema.statics.createUser = function (data, callback) {
 UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
   if (!userId || !validator.isMongoId(userId.toString()))
     return callback('bad_request');
-  console.log("hato create meme 1")
   User.findById(userId)
     .catch( err  => {
       if (err) return callback('database_error');
@@ -90,7 +86,6 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
       if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < TIME_OUT_DURATION)) {
         return callback('user_timed_out');
       }
-      console.log("hato create meme 2")
       if (!memeData || typeof memeData !== 'object')
         return callback('bad_request');
       if (!memeData.description || typeof memeData.description !== 'string')
@@ -99,7 +94,6 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
         return callback('bad_request');
       if (!memeData.mint_price || typeof memeData.mint_price !== 'number')
         return callback('bad_request');
-      console.log("hato create meme 3")
 
       Meme.create({
         creator: userId,
@@ -280,15 +274,14 @@ UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
           User.findByIdAndUpdate(
             meme.creator,
             { $inc: { balance: meme.mint_price } },
-          );
+          )
+          .then(() => {
+            return callback(null);
+          })
+          .catch(err => {
+            return callback('database_error');
+          });
         })
-        .then(() => {
-          return callback(null);
-        })
-        .catch(err => {
-          console.log(err);
-          return callback('database_error');
-        });
       });
     });
   });

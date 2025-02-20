@@ -72,7 +72,7 @@ MemeSchema.statics.findMemeById = function (id, callback){
 //     return callback(null);
 //   });
 // }; // transfer into user model
-MemeSchema.statics.findMemeByFilters = function (data) {
+MemeSchema.statics.findMemeByFilters = function (data, callback) {
   const filters = [];
 
   if (data.creator) {
@@ -94,16 +94,16 @@ MemeSchema.statics.findMemeByFilters = function (data) {
     .sort()
     .skip(skip)
     .limit(limit)
-    .catch(err => {
-      if(err)
-        return callback ('database_error');
-    })
     .then(meme => {
       if(!meme)
         return callback('document_not_found');
 
-      return (null, meme);
-    });
+      return callback(null, meme);
+    })
+    .catch(err => {
+      if(err)
+        return callback ('database_error');
+    })
 };
 
 export const Meme = mongoose.model('Meme', MemeSchema);
