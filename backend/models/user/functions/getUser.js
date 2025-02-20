@@ -6,7 +6,8 @@ export const getUser = (user, callback) => {
   return callback(null, {
     telegram_id: user.telegram_id,
     chopin_public_key: user.chopin_public_key,
-    telegram_username: user.telegram_username,
-    is_banned: user.is_banned
+    is_time_out: user.is_time_out,
+    balance: user.balance,
+    minted_memes: user.minted_memes
   });
 };

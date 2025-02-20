@@ -24,8 +24,8 @@ const UserSchema = new mongoose.Schema({
   chopin_public_key: {
     type: String,
     required: true,
-    trim: true,
     unique: true,
+    trim: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   is_time_out: {
@@ -192,14 +192,14 @@ UserSchema.statics.timeOutUserById = function (id, callback) {
     });
   });
 };
-UserSchema.statics.updateBalanceById = function (id, newBalance, callback) {
+UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
-  if (!newBalance || typeof newBalance != 'number' || newBalance > MAX_BALANCE_VALUE || newBalance < 0){
+  if (!incrementBalanceBy || typeof incrementBalanceBy != 'number' || incrementBalanceBy > MAX_BALANCE_VALUE || incrementBalanceBy < 0){
     return callback('bad_request');
   }
-  User.findByIdAndUpdate(id, {$set: {
-    balance: newBalance
+  User.findByIdAndUpdate(id, {$inc: {
+    balance: incrementBalanceBy
   }}, { new: true })
   .catch(err => {
     if (err) return callback('database_error');
@@ -210,26 +210,26 @@ UserSchema.statics.updateBalanceById = function (id, newBalance, callback) {
     getUser(user, (err, user) => {
       if (err) return callback(err);
 
-      return callback(null, user);
+      return callback(null, user.balance);
     });
   });
 };
-UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
-  if (!id || !validator.isMongoId(id.toString()))
-    return callback('bad_request');
+// UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
+//   if (!id || !validator.isMongoId(id.toString()))
+//     return callback('bad_request');
 
-  User.findOneAndDelete({ _id: id })
-  .catch(err => {
-    if (err) return callback('database_error');
-  })
-  .then(user => {
-    if (!user) return callback('document_not_found');
+//   User.findOneAndDelete({ _id: id })
+//   .catch(err => {
+//     if (err) return callback('database_error');
+//   })
+//   .then(user => {
+//     if (!user) return callback('document_not_found');
 
-    return callback(null);
-  });
-};
+//     return callback(null);
+//   });
+// };
 UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
-  if (!publicKey || typeof publicKey !== 'string' || !validator.isUUID(publicKey))
+  if (!publicKey || typeof publicKey !== 'string') // || !validator.isUUID(publicKey))
     return callback('bad_request');
 
   User.findOne({ chopin_public_key: publicKey })
@@ -242,7 +242,7 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
     return callback(null, user);
   });
 };
-UserSchema.statics.purchaseMemesById = function (userId, memeId, callback) {
+UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
   if (!userId || !validator.isMongoId(userId.toString()))
     return callback('bad_request');
   if (!memeId || !validator.isMongoId(memeId.toString()))
@@ -252,14 +252,19 @@ UserSchema.statics.purchaseMemesById = function (userId, memeId, callback) {
     if (err) return callback('database_error');
     if (!user) return callback('user_not_found');
 
-    Meme.findUserById(memeId, (err, meme) => {
+    Meme.findMemeById(memeId, (err, meme) => {
       if (err) return callback('database_error');
       if (!meme) return callback('meme_not_found');
+
+      if(meme.creator == userId)
+        return callback ('invalid_purchase');
 
       if (user.balance < meme.mint_price)
         return callback('insufficient_balance');
 
       User.findUserById(meme.creator, (err, creatorUser) => {
+        console.log(err);
+
         if (err) return callback('database_error');
         if (!creatorUser) return callback('creator_not_found');
 
@@ -269,22 +274,21 @@ UserSchema.statics.purchaseMemesById = function (userId, memeId, callback) {
             $inc: { balance: -meme.mint_price },
             $push: { minted_memes: meme._id }
           },
-          { new: true },
-          (err, updatedUser) => {
-            if (err) return callback('database_error');
-
-            User.findByIdAndUpdate(
-              meme.creator,
-              { $inc: { balance: meme.mint_price } },
-              { new: true },
-              (err, updatedCreator) => {
-                if (err) return callback('database_error');
-
-                return callback(null, updatedCreator);
-              }
-            );
-          }
-        );
+        )
+        .then(updatedUser => {
+          if (!updatedUser) return callback('database_error');
+          User.findByIdAndUpdate(
+            meme.creator,
+            { $inc: { balance: meme.mint_price } },
+          );
+        })
+        .then(() => {
+          return callback(null);
+        })
+        .catch(err => {
+          console.log(err);
+          return callback('database_error');
+        });
       });
     });
   });
