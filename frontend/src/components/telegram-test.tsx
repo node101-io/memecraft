@@ -1,55 +1,41 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { retrieveLaunchParams } from '@telegram-apps/sdk';
-// import { MainButton } from '@twa-dev/sdk/react';
-
-async function fetchUserBalance(userId: number | undefined): Promise<number> {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const mockBalances: { [key: string]: number } = {
-    '5729713262': 150,
-    '6705722559': 75,
-  };
-
-  return mockBalances[String(userId)] || 0;
-};
+import WebApp from '@twa-dev/sdk';
+import { MainButton } from '@twa-dev/sdk/react';
 
 export default function TelegramTest() {
-  const [userId, setUserId] = useState<number | undefined>(undefined);
-  const [balance, setBalance] = useState<number | undefined>(undefined);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const { initDataRaw, initData } = retrieveLaunchParams();
+    const loginChopin = async () => {
+      // const devAddress = document.cookie.split(';').find(c => c.trim().startsWith('dev-address='))?.split('=')[1];
+      WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
+        if (error)
+          return console.error(error);
 
-    console.log(initDataRaw, initData)
+        const response = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
+        const data = await response.json();
 
-    // setUserId(initData?.user?.id);
+        setWalletAddress(data.address);
 
-    // fetchUserBalance(initData?.user?.id)
-    //   .then((userBalance) => {
-    //     setBalance(userBalance);
-    //     setLoading(false);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error fetching user balance:", error);
-    //     setLoading(false);
-    //   });
+        if (data.address !== devAddress)
+          WebApp.CloudStorage.setItem('dev-address', data.address);
+      });
+    };
 
+    loginChopin();
   }, []);
 
   return (
     <div>
       <h1>Telegram Test</h1>
-      {userId ? (<>
-        <pre>{userId}</pre>
-        {balance !== undefined ? <pre>{balance}</pre> : <p>Loading...</p>}
-        {loading ? <p>Loading...</p> : null}
-        {/* <MainButton
-          onClick={() => {}}
-          text="Switch Inline Query"
-        ></MainButton> */}
+      {walletAddress ? (<>
+        <pre>{walletAddress}</pre>
+        <MainButton
+          onClick={() => WebApp.switchInlineQuery('')}
+          text='Switch Inline Query'
+        />
       </>) : (
         <p>Loading...</p>
       )}

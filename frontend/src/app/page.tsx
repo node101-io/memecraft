@@ -6,16 +6,11 @@ import TelegramTest from "@/components/telegram-test";
 
 export default async function Home() {
   const address = await getAddress();
-  console.log(address)
+  console.log('address', address);
 
   return (
     <div className={styles.page}>
       <TelegramTest />
-      {address ? (
-        <p>Address: {address}</p>
-      ) : (
-        <p>Loading...</p>
-      )}
       {/* <main className={styles.main}>
         <Image
           className={styles.logo}
@@ -104,4 +99,4 @@ export default async function Home() {
       </footer> */}
     </div>
   );
-}
+};
