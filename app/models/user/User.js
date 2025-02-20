@@ -138,6 +138,7 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
       // });
     });
 };
+
 UserSchema.statics.findUserById = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
@@ -152,6 +153,7 @@ UserSchema.statics.findUserById = function (id, callback) {
     return callback(null, user);
   });
 };
+
 UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
@@ -166,6 +168,7 @@ UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
     });
   });
 };
+
 UserSchema.statics.timeOutUserById = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
@@ -186,6 +189,59 @@ UserSchema.statics.timeOutUserById = function (id, callback) {
     });
   });
 };
+
+// The following function is a basis for lots of POST requests.
+UserSchema.statics.updateUserById = function (id, data, callback) {
+  const User = this;
+
+  if (!data || typeof data !== 'object')
+    return callback('bad_request');
+
+  const updateData = {};
+
+  if (data.change_in_balance && typeof data.change_in_balance === 'number' && data.change_in_balance <= MAX_BALANCE_VALUE)
+    updateData.$inc = { balance: data.change_in_balance };
+
+  if (data.is_time_out && !isNaN(Date.parse(data.is_time_out)))
+    updateData.$set = { is_time_out: data.is_time_out };
+
+  if (data.minted_memes && Array.isArray(data.minted_memes) && data.minted_memes.length <= MAX_MEMES_ARRAY_LENGTH) {
+    const validMemes = data.minted_memes.filter(meme => validator.isMongoId(meme.id));
+
+    if (validMemes.length !== data.minted_memes.length)
+      return callback('bad_request');
+
+    updateData.$push = {
+      minted_memes: {
+        $each: validMemes.map(meme => ({
+          id: meme.id,
+          last_used_date: meme.last_used_date
+        }))
+      }
+    };
+  };
+
+  if (Object.keys(updateData).length === 0)
+    return callback('bad_request');
+
+  User.findUserById(id, (err, user) => {
+    if (err)
+      return callback(err);
+
+    if (!user)
+      return callback('document_not_found');
+
+    User.findByIdAndUpdate(user._id, updateData, { new: true })
+      .then(updatedUser => {
+        if (!updatedUser)
+          return callback('database_error');
+
+        return callback(null, updatedUser);
+      })
+      .catch(_ => callback('database_error'));
+  });
+};
+
 UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
