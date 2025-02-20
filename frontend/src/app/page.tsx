@@ -11,6 +11,11 @@ export default async function Home() {
   return (
     <div className={styles.page}>
       <TelegramTest />
+      {address ? (
+        <p>Address: {address}</p>
+      ) : (
+        <p>Loading...</p>
+      )}
       {/* <main className={styles.main}>
         <Image
           className={styles.logo}
