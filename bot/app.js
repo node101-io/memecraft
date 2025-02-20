@@ -120,7 +120,7 @@ bot.on('inline_query', async (ctx) => {
       button: {
         text: 'Get more',
         web_app: {
-          url: 'https://chopin-telegram-test.vercel.app/',
+          url: "https://memecraft.node101.io/",
         },
       },
       cache_time: 0

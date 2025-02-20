@@ -1,15 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import WebApp from '@twa-dev/sdk';
-import { MainButton } from '@twa-dev/sdk/react';
+import { retrieveLaunchParams } from '@telegram-apps/sdk';
+// import { MainButton } from '@twa-dev/sdk/react';
 
 async function fetchUserBalance(userId: number | undefined): Promise<number> {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const mockBalances: { [key: string]: number } = {
-    "5729713262": 150,
-    "6705722559": 75,
+    '5729713262': 150,
+    '6705722559': 75,
   };
 
   return mockBalances[String(userId)] || 0;
@@ -21,19 +21,21 @@ export default function TelegramTest() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    console.log(WebApp)
+    const { initDataRaw, initData } = retrieveLaunchParams();
 
-    setUserId(WebApp.initDataUnsafe.user?.id);
+    console.log(initDataRaw, initData)
 
-    fetchUserBalance(WebApp.initDataUnsafe.user?.id)
-      .then((userBalance) => {
-        setBalance(userBalance);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching user balance:", error);
-        setLoading(false);
-      });
+    // setUserId(initData?.user?.id);
+
+    // fetchUserBalance(initData?.user?.id)
+    //   .then((userBalance) => {
+    //     setBalance(userBalance);
+    //     setLoading(false);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error fetching user balance:", error);
+    //     setLoading(false);
+    //   });
 
   }, []);
 
@@ -44,10 +46,10 @@ export default function TelegramTest() {
         <pre>{userId}</pre>
         {balance !== undefined ? <pre>{balance}</pre> : <p>Loading...</p>}
         {loading ? <p>Loading...</p> : null}
-        <MainButton
-          onClick={() => WebApp.switchInlineQuery('')}
+        {/* <MainButton
+          onClick={() => {}}
           text="Switch Inline Query"
-        ></MainButton>
+        ></MainButton> */}
       </>) : (
         <p>Loading...</p>
       )}
