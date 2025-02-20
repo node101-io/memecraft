@@ -64,14 +64,6 @@ UserSchema.statics.createUser = function (data, callback) {
     telegram_id: data.telegram_id,
     chopin_public_key: data.chopin_public_key,
   })
-  // .exec((err, user) => {
-  //   if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-  //     return callback('duplicated_unique_field');
-  //   if (err)
-  //     return callback('database_error');
-
-  //   return callback(null, user);
-  // });
   .then(user => {
     return callback(null, user);
   })
@@ -82,23 +74,23 @@ UserSchema.statics.createUser = function (data, callback) {
     if (err)
       return callback('database_error');
   })
-
-
 };
 
 UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
   if (!userId || !validator.isMongoId(userId.toString()))
     return callback('bad_request');
-
+  console.log("hato create meme 1")
   User.findById(userId)
-    .exec((err, user) => {
+    .catch( err  => {
       if (err) return callback('database_error');
+    })
+    .then(user => {
       if (!user) return callback('user_not_found');
 
       if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < TIME_OUT_DURATION)) {
         return callback('user_timed_out');
       }
-
+      console.log("hato create meme 2")
       if (!memeData || typeof memeData !== 'object')
         return callback('bad_request');
       if (!memeData.description || typeof memeData.description !== 'string')
@@ -107,6 +99,7 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
         return callback('bad_request');
       if (!memeData.mint_price || typeof memeData.mint_price !== 'number')
         return callback('bad_request');
+      console.log("hato create meme 3")
 
       Meme.create({
         creator: userId,
@@ -114,37 +107,56 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
         content_url: memeData.content_url,
         mint_price: memeData.mint_price
       })
-      .exec((err, newMeme) => {
-          if (err) {
-            if (err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-              return callback('duplicated_unique_field');
-            return callback('database_error');
-          }
+      .then(newMeme => {
+        if (!newMeme) return; // Ensures execution stops if Meme creation failed
 
-          User.findByIdAndUpdate(
-            userId,
-            { $push: { minted_memes: newMeme._id } },
-            { new: true },
-            (err, updatedUser) => {
-              if (err) return callback('database_error');
-
-              return callback(null, newMeme);
-            }
-          );
-        });
-  });
+        return User.findByIdAndUpdate(
+          userId,
+          { $push: { minted_memes: newMeme._id } },
+          { new: true }
+        ).then(() => callback(null, newMeme));
+      })
+      .catch(err => {
+        console.log(err);
+        if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+          return callback('duplicated_unique_field');
+        if (err)
+          return callback('database_error');
+      });
+      // .catch(err => {
+      //   if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+      //     return callback('duplicated_unique_field');
+      //   if (err)
+      //     return callback('database_error');
+      // })
+      // .then(newMeme => {
+      //   User.findByIdAndUpdate(
+      //     userId,
+      //     { $push: { minted_memes: newMeme._id } },
+      //     { new: true }
+      //     .catch(err => {
+      //       if (err) return callback('database_error');
+      //     })
+      //     .then(updatedUser => {
+      //       return callback(null, newMeme);
+      //     })
+      //   );
+      // });
+    });
 };
 UserSchema.statics.findUserById = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
   User.findById(id)
-    .exe((err, user) => {
-      if (err) return callback('database_error');
-      if (!user) return callback('document_not_found');
+  .catch(err => {
+    if (err) return callback('database_error');
+  })
+  .then(user => {
+    if (!user) return callback('document_not_found');
 
-      return callback(null, user);
-    });
+    return callback(null, user);
+  });
 };
 UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
   if (!id || !validator.isMongoId(id.toString()))
@@ -167,8 +179,10 @@ UserSchema.statics.timeOutUserById = function (id, callback) {
   User.findByIdAndUpdate(id, {$set: {
     is_time_out: Date.now()
   }}, { new: true })
-  .exec((err, user) => {
+  .catch(err => {
     if (err) return callback('database_error');
+  })
+  .then(user => {
     if (!user) return callback('document_not_found');
 
     getUser(user, (err, user) => {
@@ -187,8 +201,10 @@ UserSchema.statics.updateBalanceById = function (id, newBalance, callback) {
   User.findByIdAndUpdate(id, {$set: {
     balance: newBalance
   }}, { new: true })
-  .exec((err, user) => {
+  .catch(err => {
     if (err) return callback('database_error');
+  })
+  .then(user => {
     if (!user) return callback('document_not_found');
 
     getUser(user, (err, user) => {
@@ -203,20 +219,24 @@ UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
     return callback('bad_request');
 
   User.findOneAndDelete({ _id: id })
-  .exec((err, user) => {
+  .catch(err => {
     if (err) return callback('database_error');
+  })
+  .then(user => {
     if (!user) return callback('document_not_found');
 
     return callback(null);
-  })
+  });
 };
 UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
   if (!publicKey || typeof publicKey !== 'string' || !validator.isUUID(publicKey))
     return callback('bad_request');
 
   User.findOne({ chopin_public_key: publicKey })
-  .exec((err, user) => {
+  .catch(err => {
     if (err) return callback(err);
+  })
+  .then(user => {
     if (!user) return callback('user_not_found');
 
     return callback(null, user);

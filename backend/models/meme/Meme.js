@@ -12,7 +12,6 @@ const MemeSchema = new mongoose.Schema({
     type: mongoose.Types.ObjectId, // user.telegram_id
     required: true,
     trim: true,
-    unique: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   description: {
@@ -50,8 +49,10 @@ MemeSchema.statics.findMemeById = function (id, callback){
     return callback('bad_request');
 
   Meme.findById(id,)
-  .exec((err, meme) => {
+  .catch(err => {
     if (err) return callback('database_error');
+  })
+  .then(meme => {
     if (!meme) return callback('document_not_found');
 
     return callback(null, meme);
@@ -62,13 +63,15 @@ MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
     return callback('bad_request');
 
   Meme.findOneAndDelete({ _id: id })
-  .exec((err, meme) => {
+  .catch(err => {
     if (err) return callback('database_error');
+  })
+  .then(meme => {
     if (!meme) return callback('document_not_found');
 
     return callback(null);
   });
-};
+}; // transfer into user model
 MemeSchema.statics.findMemeByFilters = function (data) {
   const filters = [];
 
@@ -91,9 +94,11 @@ MemeSchema.statics.findMemeByFilters = function (data) {
     .sort()
     .skip(skip)
     .limit(limit)
-    .exec((err, meme) => {
+    .catch(err => {
       if(err)
         return callback ('database_error');
+    })
+    .then(meme => {
       if(!meme)
         return callback('document_not_found');
 
