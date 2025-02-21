@@ -72,7 +72,7 @@ MemeSchema.statics.findMemeById = function (id, callback){
 //     return callback(null);
 //   });
 // }; // transfer into user model
-MemeSchema.statics.findMemeByFilters = function (data, callback) {
+MemeSchema.statics.findMemesByFilters = function (data, callback) {
   const filters = [];
 
   if (data.creator) {

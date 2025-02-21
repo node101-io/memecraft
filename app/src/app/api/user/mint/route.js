@@ -1,4 +1,4 @@
-import { User } from '../../../../../../backend/models/user/User';
+import { User } from '../../../../../../app/models/user/User';
 
 export async function POST(req) {
   const body = await req.json();
