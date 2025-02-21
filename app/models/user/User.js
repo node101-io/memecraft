@@ -13,6 +13,8 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
+const COMISSION_RATE = 0.05;
+
 const UserSchema = new mongoose.Schema({
   telegram_id: {
     type: String,
@@ -164,25 +166,6 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
         if (err)
           return callback('database_error');
       });
-      // .catch(err => {
-      //   if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-      //     return callback('duplicated_unique_field');
-      //   if (err)
-      //     return callback('database_error');
-      // })
-      // .then(newMeme => {
-      //   User.findByIdAndUpdate(
-      //     data.userId,
-      //     { $push: { minted_memes: newMeme._id } },
-      //     { new: true }
-      //     .catch(err => {
-      //       if (err) return callback('database_error');
-      //     })
-      //     .then(updatedUser => {
-      //       return callback(null, newMeme);
-      //     })
-      //   );
-      // });
     });
 };
 
@@ -374,11 +357,28 @@ UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
         )
         .then(updatedUser => {
           if (!updatedUser) return callback('database_error');
+          const commission = meme.mint_price * COMISSION_RATE;
           User.findByIdAndUpdate(
             meme.creator,
-            { $inc: { balance: meme.mint_price } },
+            { $inc: { balance: meme.mint_price - commission } }
           )
           .then(() => {
+            User.findUserByPublicKey(MEME_GENERATOR_PUBLIC_KEY, (err, memeGenerator) => {
+              if(err)
+                return callback(err);
+              if(!memeGenerator)
+                return callback('ERROR!');
+              User.findByIdAndUpdate(
+                memeGenerator._id,
+                { $inc: { balance: commission } },
+              )
+              .then(()=> {
+                return callback(null);
+              })
+              .catch(err => {
+                return callback('database_error');
+              });
+            })
             return callback(null);
           })
           .catch(err => {
