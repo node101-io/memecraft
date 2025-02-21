@@ -14,7 +14,7 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const UserSchema = new mongoose.Schema({
-  telegram_id:{
+  telegram_id: {
     type: String,
     required: true,
     trim: true,
@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
-  is_time_out: {
+  timeout: {
     type: Date,
     default: 0
   },
@@ -40,7 +40,7 @@ const UserSchema = new mongoose.Schema({
   minted_memes: {
     type: Array,
     default: [],
-    maxlength:MAX_MEMES_ARRAY_LENGTH,
+    maxlength: MAX_MEMES_ARRAY_LENGTH,
     validate: {
       validator: function (arr) {
         return arr.every((item) => typeof item === "object" && item !== null);
@@ -83,7 +83,7 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
     .then(user => {
       if (!user) return callback('user_not_found');
 
-      if (user.is_time_out && (Date.now() - new Date(user.is_time_out).getTime() < TIME_OUT_DURATION)) {
+      if (user.timeout && (Date.now() - new Date(user.timeout).getTime() < TIME_OUT_DURATION)) {
         return callback('user_timed_out');
       }
       if (!memeData || typeof memeData !== 'object')
@@ -174,7 +174,7 @@ UserSchema.statics.timeOutUserById = function (id, callback) {
     return callback('bad_request');
 
   User.findByIdAndUpdate(id, {$set: {
-    is_time_out: Date.now()
+    timeout: Date.now()
   }}, { new: true })
   .catch(err => {
     if (err) return callback('database_error');
@@ -202,8 +202,8 @@ UserSchema.statics.updateUserById = function (id, data, callback) {
   if (data.change_in_balance && typeof data.change_in_balance === 'number' && data.change_in_balance <= MAX_BALANCE_VALUE)
     updateData.$inc = { balance: data.change_in_balance };
 
-  if (data.is_time_out && !isNaN(Date.parse(data.is_time_out)))
-    updateData.$set = { is_time_out: data.is_time_out };
+  if (data.timeout && !isNaN(Date.parse(data.timeout)))
+    updateData.$set = { timeout: data.timeout };
 
   if (data.minted_memes && Array.isArray(data.minted_memes) && data.minted_memes.length <= MAX_MEMES_ARRAY_LENGTH) {
     const validMemes = data.minted_memes.filter(meme => validator.isMongoId(meme.id));
