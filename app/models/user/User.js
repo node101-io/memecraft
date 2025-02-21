@@ -29,23 +29,28 @@ const UserSchema = new mongoose.Schema({
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
   timeout: {
-    type: Date,
+    type: Number,
     default: 0
   },
   balance: {
     type: Number,
-    default: 0,
+    default: 10,
     max: MAX_BALANCE_VALUE
   },
   minted_memes: {
-    type: Array,
-    default: [],
-    maxlength: MAX_MEMES_ARRAY_LENGTH,
-    validate: {
-      validator: function (arr) {
-        return arr.every((item) => typeof item === "object" && item !== null);
+    type: [
+      {
+        meme_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true
+        },
+        last_used_at: {
+          type: Number,
+          required: true
+        }
       }
-    },
+    ],
+    default: []
   }
 });
 
@@ -56,10 +61,13 @@ UserSchema.statics.createUser = function (data, callback) {
     return callback('bad_request');
   if(!data.chopin_public_key || typeof data.chopin_public_key != 'string') // || !validator.isUUID(data.chopin_public_key))
     return callback('bad_request');
+  if(!data.timeout || typeof data.typeof != 'number')
+    return callback('bad_request');
 
   User.create({
     telegram_id: data.telegram_id,
     chopin_public_key: data.chopin_public_key,
+    timeout: data.timeout
   })
   .then(user => {
     return callback(null, user);
@@ -73,39 +81,40 @@ UserSchema.statics.createUser = function (data, callback) {
   })
 };
 
-UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
-  if (!userId || !validator.isMongoId(userId.toString()))
+UserSchema.statics.createMemeForUser = function (data, callback) {
+  if (!data.userId || !validator.isMongoId(data.userId.toString()))
     return callback('bad_request');
-  User.findById(userId)
+  User.findById(data.userId)
     .catch( err  => {
       if (err) return callback('database_error');
     })
     .then(user => {
       if (!user) return callback('user_not_found');
 
-      if (user.timeout && (Date.now() - new Date(user.timeout).getTime() < TIME_OUT_DURATION)) {
+      if (user.timeout && (new Date(data.dateNow).getTime() - user.timeout) < TIME_OUT_DURATION) {
         return callback('user_timed_out');
       }
-      if (!memeData || typeof memeData !== 'object')
+
+      if (!data.memeData || typeof data.memeData !== 'object')
         return callback('bad_request');
-      if (!memeData.description || typeof memeData.description !== 'string')
+      if (!data.memeData.description || typeof data.memeData.description !== 'string')
         return callback('bad_request');
-      if (!memeData.content_url || typeof memeData.content_url !== 'string')
+      if (!data.memeData.content_url || typeof data.memeData.content_url !== 'string')
         return callback('bad_request');
-      if (!memeData.mint_price || typeof memeData.mint_price !== 'number')
+      if (!data.memeData.mint_price || typeof data.memeData.mint_price !== 'number')
         return callback('bad_request');
 
       Meme.create({
-        creator: userId,
-        description: memeData.description,
-        content_url: memeData.content_url,
-        mint_price: memeData.mint_price
+        creator: data.userId,
+        description: data.memeData.description,
+        content_url: data.memeData.content_url,
+        mint_price: data.memeData.mint_price
       })
       .then(newMeme => {
         if (!newMeme) return; // Ensures execution stops if Meme creation failed
 
         return User.findByIdAndUpdate(
-          userId,
+          data.userId,
           { $push: { minted_memes: newMeme._id } },
           { new: true }
         ).then(() => callback(null, newMeme));
@@ -125,7 +134,7 @@ UserSchema.statics._createMemeForUser = function (userId, memeData, callback) {
       // })
       // .then(newMeme => {
       //   User.findByIdAndUpdate(
-      //     userId,
+      //     data.userId,
       //     { $push: { minted_memes: newMeme._id } },
       //     { new: true }
       //     .catch(err => {
