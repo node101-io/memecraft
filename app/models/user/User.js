@@ -199,12 +199,12 @@ UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
   });
 };
 
-UserSchema.statics.timeOutUserById = function (id, callback) {
+UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
   User.findByIdAndUpdate(id, {$set: {
-    timeout: Date.now()
+    timeout: dateNow
   }}, { new: true })
   .catch(err => {
     if (err) return callback('database_error');
