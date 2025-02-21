@@ -64,6 +64,11 @@ UserSchema.statics.createUser = function (data, callback) {
   if(!data.timeout || typeof data.typeof != 'number')
     return callback('bad_request');
 
+  User.findUser(data, (err, user) => {
+    if (user)
+      return callback(null, user);
+  });
+
   User.create({
     telegram_id: data.telegram_id,
     chopin_public_key: data.chopin_public_key,
@@ -78,7 +83,40 @@ UserSchema.statics.createUser = function (data, callback) {
       return callback('duplicated_unique_field');
     if (err)
       return callback('database_error');
-  })
+  });
+};
+
+User.schema.statics.findUser = function (data, callback) {
+  if (!data || typeof data !== 'object')
+    return callback('bad_request');
+
+  const filters = {};
+
+  if (data.telegram_id && typeof data.telegram_id === 'string') {
+    filters.telegram_id = data.telegram_id;
+  }
+
+  if (data.chopin_public_key && typeof data.chopin_public_key === 'string') {
+    filters.chopin_public_key = data.chopin_public_key;
+  }
+
+  if (data._id && validator.isMongoId(data._id.toString())) {
+    filters._id = data._id;
+  }
+
+  if (Object.keys(filters).length === 0) {
+    return callback('bad_request');
+  }
+
+  User.findOne(filters)
+    .then(user => {
+      if (!user) return callback('user_not_found');
+      return callback(null, user);
+    })
+    .catch(err => {
+      console.error(err);
+      return callback('database_error');
+    });
 };
 
 UserSchema.statics.createMemeForUser = function (data, callback) {
