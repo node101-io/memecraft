@@ -112,6 +112,7 @@
   font-weight: 500;
   color: #8F8F8F;
   padding: 14px 22px 0;
+  justify-self: center;
 }
 
 /* Meme boyutunu ekran genişliğine göre ayarlama */
