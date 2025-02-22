@@ -4,8 +4,6 @@ import mongoose from 'mongoose';
 import validator from 'validator';
 import { Meme } from '../meme/Meme.js';
 
-import { getUser } from './functions/getUser.js';
-
 const MAX_DATABASE_TEXT_FIELD_LENGTH = 1e3;
 const MAX_BALANCE_VALUE = 1e9;
 const TIME_OUT_DURATION = 24 * 60 * 60 * 1000;
@@ -122,9 +120,6 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
   if (!data.userId || !validator.isMongoId(data.userId.toString()))
     return callback('bad_request');
   User.findById(data.userId)
-    .catch( err  => {
-      if (err) return callback('database_error');
-    })
     .then(user => {
       if (!user) return callback('user_not_found');
 
@@ -175,28 +170,13 @@ UserSchema.statics.findUserById = function (id, callback) {
     return callback('bad_request');
 
   User.findById(id)
-  .then(user => {
-    if (!user) return callback('document_not_found');
-    return callback(null, user);
-  })
-  .catch(err => {
-    if (err) return callback('database_error');
-  });
-};
-
-UserSchema.statics.findUserByIdAndFormat = function (id, callback) {
-  if (!id || !validator.isMongoId(id.toString()))
-    return callback('bad_request');
-
-  User.findUserById(id, (err, user) => {
-    if (err) return callback(err);
-
-    getUser(user, (err, user) => {
-      if (err) return callback(err);
-
+    .then(user => {
+      if (!user) return callback('document_not_found');
       return callback(null, user);
+    })
+    .catch(err => {
+      if (err) return callback('database_error');
     });
-  });
 };
 
 UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
@@ -206,18 +186,14 @@ UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
   User.findByIdAndUpdate(id, {$set: {
     timeout: dateNow
   }}, { new: true })
-  .catch(err => {
-    if (err) return callback('database_error');
-  })
-  .then(user => {
-    if (!user) return callback('document_not_found');
-
-    getUser(user, (err, user) => {
-      if (err) return callback(err);
-
+    .then(user => {
+      if (!user) return callback('document_not_found');
+  
       return callback(null, user);
+    })
+    .catch(err => {
+      if (err) return callback('database_error');
     });
-  });
 };
 
 // The following function is a basis for lots of POST requests.
@@ -281,18 +257,14 @@ UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callbac
   User.findByIdAndUpdate(id, {$inc: {
     balance: incrementBalanceBy
   }}, { new: true })
-  .catch(err => {
-    if (err) return callback('database_error');
-  })
-  .then(user => {
-    if (!user) return callback('document_not_found');
-
-    getUser(user, (err, user) => {
-      if (err) return callback(err);
-
-      return callback(null, user.balance);
+    .then(user => {
+      if (!user) return callback('document_not_found');
+  
+      return callback(null, user);
+    })
+    .catch(err => {
+      if (err) return callback('database_error');
     });
-  });
 };
 // UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
 //   if (!id || !validator.isMongoId(id.toString()))
@@ -313,14 +285,14 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
     return callback('bad_request');
 
   User.findOne({ chopin_public_key: publicKey })
-  .catch(err => {
-    if (err) return callback(err);
-  })
-  .then(user => {
-    if (!user) return callback('user_not_found');
-
-    return callback(null, user);
-  });
+    .then(user => {
+      if (!user) return callback('user_not_found');
+  
+      return callback(null, user);
+    })
+    .catch(err => {
+      if (err) return callback(err);
+    });
 };
 UserSchema.statics.purchaseMemeById = function (data, callback) {
   if (!data.buyerId || !validator.isMongoId(data.buyerId.toString()))
@@ -369,20 +341,18 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
           )
           .then(() => {
             User.findUserByPublicKey(ROOT_PUBLIC_KEY, (err, memeGenerator) => {
-              if(err)
+              if (err)
                 return callback(err);
-              if(!memeGenerator)
+              if (!memeGenerator)
                 return callback('ERROR!');
-              User.findByIdAndUpdate(
-                memeGenerator._id,
-                { $inc: { balance: COMISSION } },
-              )
-              .then(()=> {
-                return callback(null);
-              })
-              .catch(err => {
-                return callback('database_error');
-              });
+              
+              User.findByIdAndUpdate(memeGenerator._id, { $inc: { balance: COMISSION } })
+                .then(() => {
+                  return callback(null);
+                })
+                .catch(err => {
+                  return callback('database_error');
+                });
             })
             return callback(null);
           })
