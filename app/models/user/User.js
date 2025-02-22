@@ -362,5 +362,14 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
     });
   });
 };
+UserSchema.statics.findLastUsedMemesByUserId = function (userId, callback) {
+  if(!userId || !validator.isMongoId(userId.toString()))
+    return callback('bad_request');
+  User.findUserById(userId, (err, user) => {
+    if (err) return callback(err);
+
+
+  })
+};
 
 export const User = mongoose.model('User', UserSchema);
