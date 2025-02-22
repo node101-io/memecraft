@@ -1,9 +1,9 @@
-import { User } from '../../../../../../app/models/user/User';
+import { Meme } from '../../../../../../app/models/meme/Meme';
 
-export async function POST(req) {
+export async function GET(req) {
   const body = await req.json();
 
-  User.createUser(body, (err, user) => {
+  Meme.findMemeById(body.id, (err, user) => {
     if (err)
       return new Response({ success: false, error: err });
 

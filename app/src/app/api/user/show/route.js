@@ -1,4 +1,4 @@
-import { User } from '../../../../../../backend/models/user/User';
+import { User } from '../../../../../models/user/User';
 
 export async function GET(req) {
   const body = await req.json();
