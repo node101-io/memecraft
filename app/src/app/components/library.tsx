@@ -1,85 +1,130 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './library.module.css';
 import Image from 'next/image';
+import { MemeApi, type Meme } from '../services/memeApi';
 
-const MOCK_RECENT_MEMES = Array(15).fill(null).map((_, index) => ({
-  id: `recent-${index}`,
-  imageUrl: '/memes/meme-1.png',
-  title: `Recent Meme ${index + 1}`,
-  price: '0.11',
-  owner: '0x1234...5678'
-}));
-
-const MOCK_USED_MEMES = Array(15).fill(null).map((_, index) => ({
-  id: `used-${index}`,
-  imageUrl: '/memes/meme-1.png',
-  title: `Used Meme ${index + 1}`,
-  price: '0.11',
-  owner: '0x1234...5678'
-}));
-
-const MOCK_ALL_MEMES = [...MOCK_RECENT_MEMES, ...MOCK_USED_MEMES];
+const ITEMS_PER_PAGE = 15;
+const FIXED_ITEMS_COUNT = 6;
 
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [recentMemes, setRecentMemes] = useState(MOCK_RECENT_MEMES);
-  const [usedMemes, setUsedMemes] = useState(MOCK_USED_MEMES);
-  const [allMemes, setAllMemes] = useState(MOCK_ALL_MEMES);
+  const [isLoading, setIsLoading] = useState(true);
+  const [recentMemes, setRecentMemes] = useState<Meme[]>([]);
+  const [usedMemes, setUsedMemes] = useState<Meme[]>([]);
+  const [allMemes, setAllMemes] = useState<Meme[]>([]);
+  const [allPage, setAllPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
+  // Load fixed sections (recent and used)
+  useEffect(() => {
+    const loadFixedSections = async () => {
+      try {
+        const [recentResponse, usedResponse] = await Promise.all([
+          MemeApi.getRecentMemes(0, FIXED_ITEMS_COUNT),
+          MemeApi.getUsedMemes(0, FIXED_ITEMS_COUNT)
+        ]);
+
+        setRecentMemes(recentResponse.memes);
+        setUsedMemes(usedResponse.memes);
+      } catch (error) {
+        console.error('Loading error:', error);
+      }
+    };
+
+    loadFixedSections();
+  }, []);
+
+  // Search effect'i güncelleyelim
   useEffect(() => {
     const debounceTimer = setTimeout(async () => {
-      if (searchTerm.trim()) {
+      // Reset states
+      setAllMemes([]);
+      setAllPage(0);
+      setHasMore(true);
+      
+      // Yeni arama için yükleme başlat
+      try {
         setIsLoading(true);
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const filteredRecent = MOCK_RECENT_MEMES.filter(item => 
-            item.title.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          const filteredUsed = MOCK_USED_MEMES.filter(item => 
-            item.title.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          const filteredAll = MOCK_ALL_MEMES.filter(item => 
-            item.title.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-          setRecentMemes(filteredRecent);
-          setUsedMemes(filteredUsed);
-          setAllMemes(filteredAll);
-        } catch (error) {
-          console.error('Arama hatası:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setRecentMemes(MOCK_RECENT_MEMES);
-        setUsedMemes(MOCK_USED_MEMES);
-        setAllMemes(MOCK_ALL_MEMES);
+        const response = await MemeApi.getAllMemes(0, ITEMS_PER_PAGE);
+        setAllMemes(response.memes);
+        setHasMore(response.hasMore);
+        setAllPage(1);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsLoading(false);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm]);
 
-  const renderMemeGrid = (memes: typeof MOCK_RECENT_MEMES) => (
-    memes.map((meme) => (
-      <div key={meme.id} className={styles.memeItem}>
-        <Image 
-          src={meme.imageUrl} 
-          alt={meme.title} 
-          width={96} 
-          height={96}
-          className={styles.memeImage}
-        />
-      </div>
+  // loadMoreAllMemes fonksiyonunu güncelleyelim
+  const loadMoreAllMemes = useCallback(async () => {
+    if (!hasMore || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const response = await MemeApi.getAllMemes(allPage, ITEMS_PER_PAGE);
+      
+      // Eğer arama terimi varsa, aramaya göre filtrele
+      const filteredMemes = searchTerm.trim() 
+        ? response.memes.filter(meme => 
+            meme.title.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : response.memes;
+
+      setAllMemes(prev => [...prev, ...filteredMemes]);
+      setHasMore(response.hasMore && filteredMemes.length > 0);
+      setAllPage(prev => prev + 1);
+    } catch (error) {
+      console.error('Loading error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [allPage, hasMore, isLoading, searchTerm]);
+
+  // Infinite scroll observer'ı aynı kalabilir
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMoreAllMemes();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMoreAllMemes, hasMore, isLoading]);
+
+  const renderSkeletons = (count: number) => (
+    Array(count).fill(null).map((_, index) => (
+      <div key={`skeleton-${index}`} className={`${styles.memeItem} ${styles.skeleton}`} />
     ))
   );
 
-  const renderSkeletons = () => (
-    Array(6).fill(null).map((_, index) => (
-      <div key={`skeleton-${index}`} className={`${styles.memeItem} ${styles.skeleton}`} />
-    ))
+  const renderMemeGrid = (memes: Meme[], isFixed: boolean = false) => (
+    <div className={styles.memesGrid}>
+      {memes.length > 0 ? memes.map((meme) => (
+        <div key={meme.id} className={styles.memeItem}>
+          <Image 
+            src={meme.imageUrl} 
+            alt={meme.title} 
+            width={96} 
+            height={96}
+            className={styles.memeImage}
+          />
+        </div>
+      )) : renderSkeletons(isFixed ? FIXED_ITEMS_COUNT : 9)}
+    </div>
   );
 
   return (
@@ -99,27 +144,35 @@ export default function Library() {
       </div>
 
       <h3 className={styles.sectionTitle}>RECENTLY ADDED</h3>
-      <div className={styles.memesGrid}>
-        {isLoading ? renderSkeletons() : 
-          recentMemes.length > 0 ? renderMemeGrid(recentMemes.slice(0, 9)) : 
-          <div className={styles.noResults}>No results found</div>
-        }
-      </div>
+      {renderMemeGrid(recentMemes, true)}
 
       <h3 className={styles.sectionTitle}>LAST USED</h3>
-      <div className={styles.memesGrid}>
-        {isLoading ? renderSkeletons() : 
-          usedMemes.length > 0 ? renderMemeGrid(usedMemes.slice(0, 9)) : 
-          <div className={styles.noResults}>No results found</div>
-        }
-      </div>
+      {renderMemeGrid(usedMemes, true)}
 
       <h3 className={styles.sectionTitle}>ALL</h3>
       <div className={styles.memesGrid}>
-        {isLoading ? renderSkeletons() : 
-          allMemes.length > 0 ? renderMemeGrid(allMemes) : 
+        {allMemes.map((meme) => (
+          <div key={meme.id} className={styles.memeItem}>
+            <Image 
+              src={meme.imageUrl} 
+              alt={meme.title} 
+              width={96} 
+              height={96}
+              className={styles.memeImage}
+            />
+          </div>
+        ))}
+        <div ref={observerTarget} className={styles.loadingContainer}>
+          {isLoading && hasMore && (
+            <div className={styles.loadingSpinner}></div>
+          )}
+        </div>
+        {!hasMore && allMemes.length > 0 && (
+          <div className={styles.endMessage}>No more items to load</div>
+        )}
+        {!isLoading && allMemes.length === 0 && (
           <div className={styles.noResults}>No results found</div>
-        }
+        )}
       </div>
     </>
   );

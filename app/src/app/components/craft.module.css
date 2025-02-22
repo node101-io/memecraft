@@ -61,3 +61,31 @@
   transform: translateY(-2px);
   background: #B0B0B0;
 }
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.navButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.balanceDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #D0D0D0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.balanceAmount {
+  color: #4A4A4A;
+  font-weight: 600;
+}

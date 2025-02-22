@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './marketplace.module.css';
 import Image from 'next/image';
+import { MemeApi, type Meme } from '../services/memeApi';
 
 const POPULAR_TEMPLATES = [
   { id: 'pepe', src: '/templates/template-pepe.png', alt: 'Pepe' },
@@ -14,50 +15,84 @@ const POPULAR_TEMPLATES = [
   { id: 'yao', src: '/templates/template-yao.png', alt: 'Yao Ming' },
 ];
 
-const MOCK_RESULTS = Array(15).fill(null).map((_, index) => ({
-  id: `meme-${index}`,
-  imageUrl: '/memes/meme-1.png',
-  title: `Result ${index + 1}`,
-  price: '0.11',
-  owner: '0x1234...5678' // Mock owner address
-}));
+const ITEMS_PER_PAGE = 15;
 
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState(MOCK_RESULTS);
-  const [selectedMeme, setSelectedMeme] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [results, setResults] = useState<Meme[]>([]);
+  const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const handleTemplateClick = (alt: string) => {
     setSearchTerm(alt);
   };
 
-  const handleMemeClick = (meme: any) => {
+  const handleMemeClick = (meme: Meme) => {
     setSelectedMeme(meme);
   };
 
+  // Search effect
   useEffect(() => {
     const debounceTimer = setTimeout(async () => {
-      if (searchTerm.trim()) {
+      // Reset states
+      setResults([]);
+      setPage(0);
+      setHasMore(true);
+      
+      // Yeni arama için yükleme başlat
+      try {
         setIsLoading(true);
-        try {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          setResults(MOCK_RESULTS.filter(item => 
-            item.title.toLowerCase().includes(searchTerm.toLowerCase())
-          ));
-        } catch (error) {
-          console.error('Arama hatası:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        // İlk yüklemede ve boş aramada loading göstermiyor
-        setResults(MOCK_RESULTS);
+        const response = await MemeApi.searchMemes(searchTerm, 0, ITEMS_PER_PAGE);
+        setResults(response.memes);
+        setHasMore(response.hasMore);
+        setPage(1);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsLoading(false);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm]);
+
+  // Load more items
+  const loadMoreItems = useCallback(async () => {
+    if (!hasMore || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const response = await MemeApi.searchMemes(searchTerm, page, ITEMS_PER_PAGE);
+      setResults(prev => [...prev, ...response.memes]);
+      setHasMore(response.hasMore);
+      setPage(prev => prev + 1);
+    } catch (error) {
+      console.error('Loading error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, hasMore, isLoading, searchTerm]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMoreItems();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMoreItems, hasMore, isLoading]);
 
   return (
     <>
@@ -74,6 +109,7 @@ export default function Marketplace() {
           className={styles.searchInput}
         />
       </div>
+
       <h3 className={styles.sectionTitle}>POPULAR TEMPLATES</h3>
       <div className={styles.templateGrid}>
         {POPULAR_TEMPLATES.map(template => (
@@ -93,42 +129,44 @@ export default function Marketplace() {
           </div>
         ))}
       </div>
+
       <div className={styles.resultsGrid}>
-        {isLoading ? (
-          // Loading skeletons
-          Array(15).fill(null).map((_, index) => (
-            <div key={`skeleton-${index}`} className={`${styles.resultItem} ${styles.skeleton}`}>
-              <div className={styles.skeletonPriceTag}></div>
-            </div>
-          ))
-        ) : results.length > 0 ? (
-          results.map((item: any) => (
-            <div 
-              key={item.id} 
-              className={styles.resultItem}
-              onClick={() => handleMemeClick(item)}
-              role="button"
-              tabIndex={0}
-            >
+        {results.map((item) => (
+          <div 
+            key={item.id} 
+            className={styles.resultItem}
+            onClick={() => handleMemeClick(item)}
+            role="button"
+            tabIndex={0}
+          >
+            <Image 
+              src={item.imageUrl} 
+              alt={item.title || 'Meme'} 
+              width={96} 
+              height={96}
+              className={styles.memeImage}
+            />
+            <div className={styles.priceTag}>
+              {item.price}
               <Image 
-                src={item.imageUrl} 
-                alt={item.title || 'Meme'} 
-                width={96} 
-                height={96} 
+                src="/token/token.svg"
+                alt="Token"
+                width={10}
+                height={10}
+                className={styles.tokenIcon}
               />
-              <div className={styles.priceTag}>
-                {item.price}
-                <Image 
-                  src="/token/token.svg"
-                  alt="Token"
-                  width={10}
-                  height={10}
-                  className={styles.tokenIcon}
-                />
-              </div>
             </div>
-          ))
-        ) : (
+          </div>
+        ))}
+        <div ref={observerTarget} className={styles.loadingContainer}>
+          {isLoading && hasMore && (
+            <div className={styles.loadingSpinner}></div>
+          )}
+        </div>
+        {!hasMore && results.length > 0 && (
+          <div className={styles.endMessage}>No more items to load</div>
+        )}
+        {!isLoading && results.length === 0 && (
           <div className={styles.noResults}>No results found</div>
         )}
       </div>
@@ -168,4 +206,4 @@ export default function Marketplace() {
       )}
     </>
   );
-};
+}
