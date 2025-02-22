@@ -322,21 +322,21 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
     return callback(null, user);
   });
 };
-UserSchema.statics.purchaseMemeById = function (buyerId, memeId, callback) {
-  if (!buyerId || !validator.isMongoId(buyerId.toString()))
+UserSchema.statics.purchaseMemeById = function (data, callback) {
+  if (!data.buyerId || !validator.isMongoId(data.buyerId.toString()))
     return callback('bad_request');
-  if (!memeId || !validator.isMongoId(memeId.toString()))
+  if (!data.memeId || !validator.isMongoId(data.memeId.toString()))
     return callback('bad_request');
 
-  User.findUserById(buyerId, (err, user) => {
+  User.findUserById(data.buyerId, (err, user) => {
     if (err) return callback('database_error');
     if (!user) return callback('user_not_found');
 
-    Meme.findMemeById(memeId, (err, meme) => {
+    Meme.findMemeById(data.memeId, (err, meme) => {
       if (err) return callback('database_error');
       if (!meme) return callback('meme_not_found');
 
-      if(meme.creator == buyerId)
+      if(meme.creator == data.buyerId)
         return callback ('invalid_purchase');
 
       if (user.balance < meme.mint_price)
@@ -349,10 +349,13 @@ UserSchema.statics.purchaseMemeById = function (buyerId, memeId, callback) {
         if (!creatorUser) return callback('creator_not_found');
 
         User.findByIdAndUpdate(
-          buyerId,
+          data.buyerId,
           {
             $inc: { balance: -meme.mint_price },
-            $push: { minted_memes: meme._id }
+            $push: { minted_memes:{
+                meme_id: meme._id,
+                last_used_at: data.dateNow
+            }}
           },
         )
         .then(updatedUser => {
