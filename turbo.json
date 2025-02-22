@@ -8,10 +8,10 @@
       "cache": false
     },
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": []
     },
     "start": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "persistent": true,
       "cache": false
     }

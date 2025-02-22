@@ -10,5 +10,5 @@ export async function POST(req) {
   
       resolve({ success: true, data: meme })
     });
-  });
+  }));
 };
