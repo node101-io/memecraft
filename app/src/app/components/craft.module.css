@@ -1,0 +1,63 @@
+.subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8F8F8F;
+  padding: 14px 22px 0;
+  text-align: center;
+  width: 100%;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  padding: 0 22px;
+  margin-top: 14px;
+}
+
+.promptInput {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 40px 10px 12px;
+  background-color: #D0D0D0;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+}
+
+.promptInput::placeholder {
+  color: #8F8F8F;
+  font-weight: 500;
+}
+
+.submitButton {
+  position: absolute;
+  right: 32px;
+  top: 0;
+  bottom: 0;
+  margin-top: auto;
+  margin-bottom: auto;
+  width: 21px;
+  height: 21px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton svg {
+  width: 21px;
+  height: 21px;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  background: #B0B0B0;
+}
