@@ -123,9 +123,8 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
     .then(user => {
       if (!user) return callback('user_not_found');
 
-      if (user.timeout && (new Date(data.dateNow).getTime() - user.timeout) < TIME_OUT_DURATION) {
+      if (user.timeout && data.dateNow - user.timeout < TIME_OUT_DURATION)
         return callback('user_timed_out');
-      }
 
       if (!data.memeData || typeof data.memeData !== 'object')
         return callback('bad_request');
