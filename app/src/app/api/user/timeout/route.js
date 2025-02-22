@@ -7,10 +7,12 @@ export async function POST(req) {
 
   const dateNow = await Oracle.now();
 
-  User.timeOutUserById(body.id, dateNow, (err) => {
-    if (err)
-      return new Response({ success: false, error: err });
+  return new Response(await new Promise((resolve, reject) => {
+    User.timeOutUserById(body.id, dateNow, (err) => {
+      if (err)
+        resolve({ success: false, error: err });
 
-    return new Response({ success: true });
-  });
+      resolve({ success: true });
+    });
+  }));
 };

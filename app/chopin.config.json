@@ -1,5 +1,5 @@
 {
-  "command": "npm run dev",
+  "command": "next start",
   "proxyPort": 4000,
   "targetPort": 3000
 }

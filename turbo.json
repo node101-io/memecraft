@@ -3,7 +3,15 @@
   "ui": "tui",
   "tasks": {
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": [],
+      "persistent": true,
+      "cache": false
+    },
+    "build": {
+      "dependsOn": []
+    },
+    "start": {
+      "dependsOn": ["build"],
       "persistent": true,
       "cache": false
     }

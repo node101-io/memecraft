@@ -49,14 +49,14 @@ MemeSchema.statics.findMemeById = function (id, callback){
     return callback('bad_request');
 
   Meme.findById(id,)
-  .catch(err => {
-    if (err) return callback('database_error');
-  })
-  .then(meme => {
-    if (!meme) return callback('document_not_found');
-
-    return callback(null, meme);
-  });
+    .then(meme => {
+      if (!meme) return callback('document_not_found');
+  
+      return callback(null, meme);
+    })
+    .catch(err => {
+      if (err) return callback('database_error');
+    });
 };
 // MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
 //   if (!id || !validator.isMongoId(id.toString()))

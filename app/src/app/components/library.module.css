@@ -1,0 +1,164 @@
+.searchWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 32px;
+  width: 20px;
+  height: 20px;
+  color: #8F8F8F;
+  z-index: 1;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  background-color: #D0D0D0;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #8F8F8F;
+  font-weight: 500;
+}
+
+.memesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px 32px;
+  width: 100%;
+}
+
+.memeItem {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #D0D0D0;
+  position: relative;
+}
+
+.priceTag {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 22px;
+  width: fit-content;
+  text-align: center;
+  background-color: #E29CFF;
+  padding: 2px 8px;
+  border-top-left-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #510E2A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tokenIcon {
+  display: block;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.skeleton {
+  background-color: #D0D0D0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.skeletonPriceTag {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 22px;
+  width: 50px;
+  background-color: #E29CFF;
+  animation: pulse 2s ease-in-out infinite;
+  border-top-left-radius: 8px;
+}
+
+.noResults {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #8F8F8F;
+  font-size: 14px;
+  font-weight: 500;
+  padding-top: 20px;
+}
+
+.sectionTitle {
+  display: flex;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8F8F8F;
+  padding-top: 14px;
+  justify-content: center;
+  width: 100%;
+}
+
+.memeImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.loadingSpinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #D0D0D0;
+  border-top: 3px solid #E29CFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loadingContainer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin-bottom: 10px;
+  height: 60px;
+}
+
+.initialLoadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.endMessage {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #8F8F8F;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 20px;
+}
