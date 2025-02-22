@@ -14,6 +14,7 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const COMISSION_RATE = 0.05;
+const ROOT_PUBLIC_KEY = "rootUser";
 
 const UserSchema = new mongoose.Schema({
   telegram_id: {
@@ -63,32 +64,29 @@ UserSchema.statics.createUser = function (data, callback) {
     return callback('bad_request');
   if(!data.chopin_public_key || typeof data.chopin_public_key != 'string') // || !validator.isUUID(data.chopin_public_key))
     return callback('bad_request');
-  if(!data.timeout || typeof data.typeof != 'number')
-    return callback('bad_request');
 
   User.findUser(data, (err, user) => {
     if (user)
       return callback(null, user);
-  });
 
-  User.create({
-    telegram_id: data.telegram_id,
-    chopin_public_key: data.chopin_public_key,
-    timeout: data.timeout
-  })
-  .then(user => {
-    return callback(null, user);
-  })
-  .catch(err => {
-    console.log(err);
-    if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-      return callback('duplicated_unique_field');
-    if (err)
-      return callback('database_error');
+    User.create({
+      telegram_id: data.telegram_id,
+      chopin_public_key: data.chopin_public_key,
+    })
+    .then(user => {
+      return callback(null, user);
+    })
+    .catch(err => {
+      console.log(err);
+      if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+        return callback('duplicated_unique_field');
+      if (err)
+        return callback('database_error');
+    });
   });
 };
 
-User.schema.statics.findUser = function (data, callback) {
+UserSchema.statics.findUser = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
@@ -109,7 +107,6 @@ User.schema.statics.findUser = function (data, callback) {
   if (Object.keys(filters).length === 0) {
     return callback('bad_request');
   }
-
   User.findOne(filters)
     .then(user => {
       if (!user) return callback('user_not_found');
@@ -145,17 +142,21 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
         return callback('bad_request');
 
       Meme.create({
-        creator: data.userId,
+        creator: new mongoose.Types.ObjectId(data.userId),
         description: data.memeData.description,
         content_url: data.memeData.content_url,
         mint_price: data.memeData.mint_price
       })
       .then(newMeme => {
         if (!newMeme) return; // Ensures execution stops if Meme creation failed
-
         return User.findByIdAndUpdate(
           data.userId,
-          { $push: { minted_memes: newMeme._id } },
+          { $push:
+            { minted_memes: {
+            meme_id: newMeme._id,
+            last_used_at: data.dateNow
+            }
+          }},
           { new: true }
         ).then(() => callback(null, newMeme));
       })
@@ -174,13 +175,12 @@ UserSchema.statics.findUserById = function (id, callback) {
     return callback('bad_request');
 
   User.findById(id)
-  .catch(err => {
-    if (err) return callback('database_error');
-  })
   .then(user => {
     if (!user) return callback('document_not_found');
-
     return callback(null, user);
+  })
+  .catch(err => {
+    if (err) return callback('database_error');
   });
 };
 
@@ -322,13 +322,13 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
     return callback(null, user);
   });
 };
-UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
-  if (!userId || !validator.isMongoId(userId.toString()))
+UserSchema.statics.purchaseMemeById = function (buyerId, memeId, callback) {
+  if (!buyerId || !validator.isMongoId(buyerId.toString()))
     return callback('bad_request');
   if (!memeId || !validator.isMongoId(memeId.toString()))
     return callback('bad_request');
 
-  User.findUserById(userId, (err, user) => {
+  User.findUserById(buyerId, (err, user) => {
     if (err) return callback('database_error');
     if (!user) return callback('user_not_found');
 
@@ -336,7 +336,7 @@ UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
       if (err) return callback('database_error');
       if (!meme) return callback('meme_not_found');
 
-      if(meme.creator == userId)
+      if(meme.creator == buyerId)
         return callback ('invalid_purchase');
 
       if (user.balance < meme.mint_price)
@@ -349,7 +349,7 @@ UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
         if (!creatorUser) return callback('creator_not_found');
 
         User.findByIdAndUpdate(
-          userId,
+          buyerId,
           {
             $inc: { balance: -meme.mint_price },
             $push: { minted_memes: meme._id }
@@ -357,20 +357,22 @@ UserSchema.statics.purchaseMemeById = function (userId, memeId, callback) {
         )
         .then(updatedUser => {
           if (!updatedUser) return callback('database_error');
-          const commission = meme.mint_price * COMISSION_RATE;
+
+          const COMISSION = meme.mint_price * COMISSION_RATE;
+
           User.findByIdAndUpdate(
             meme.creator,
-            { $inc: { balance: meme.mint_price - commission } }
+            { $inc: { balance: meme.mint_price - COMISSION } }
           )
           .then(() => {
-            User.findUserByPublicKey(MEME_GENERATOR_PUBLIC_KEY, (err, memeGenerator) => {
+            User.findUserByPublicKey(ROOT_PUBLIC_KEY, (err, memeGenerator) => {
               if(err)
                 return callback(err);
               if(!memeGenerator)
                 return callback('ERROR!');
               User.findByIdAndUpdate(
                 memeGenerator._id,
-                { $inc: { balance: commission } },
+                { $inc: { balance: COMISSION } },
               )
               .then(()=> {
                 return callback(null);
