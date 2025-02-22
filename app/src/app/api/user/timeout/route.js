@@ -3,10 +3,12 @@ import { User } from '../../../../../../app/models/user/User';
 export async function POST(req) {
   const body = await req.json();
 
-  User.timeOutUserById(body.id, (err) => {
-    if (err)
-      return new Response({ success: false, error: err });
+  return new Response(await new Promise((resolve, reject) => {
+    User.timeOutUserById(body.id, (err) => {
+      if (err)
+        resolve({ success: false, error: err });
 
-    return new Response({ success: true });
-  });
+      resolve({ success: true });
+    });
+  }));
 };

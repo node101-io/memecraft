@@ -188,7 +188,7 @@ UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
   }}, { new: true })
     .then(user => {
       if (!user) return callback('document_not_found');
-  
+
       return callback(null, user);
     })
     .catch(err => {
@@ -259,7 +259,7 @@ UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callbac
   }}, { new: true })
     .then(user => {
       if (!user) return callback('document_not_found');
-  
+
       return callback(null, user);
     })
     .catch(err => {
@@ -287,7 +287,7 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
   User.findOne({ chopin_public_key: publicKey })
     .then(user => {
       if (!user) return callback('user_not_found');
-  
+
       return callback(null, user);
     })
     .catch(err => {
@@ -315,8 +315,6 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
         return callback('insufficient_balance');
 
       User.findUserById(meme.creator, (err, creatorUser) => {
-        console.log(err);
-
         if (err) return callback('database_error');
         if (!creatorUser) return callback('creator_not_found');
 
@@ -345,7 +343,7 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
                 return callback(err);
               if (!memeGenerator)
                 return callback('ERROR!');
-              
+
               User.findByIdAndUpdate(memeGenerator._id, { $inc: { balance: COMISSION } })
                 .then(() => {
                   return callback(null);
