@@ -99,11 +99,13 @@
 }
 
 .sectionTitle {
+  display: flex;
   font-size: 12px;
   font-weight: 500;
   color: #8F8F8F;
   padding-top: 14px;
-  justify-self: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .templateGrid {

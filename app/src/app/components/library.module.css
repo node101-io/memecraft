@@ -108,30 +108,13 @@
 }
 
 .sectionTitle {
+  display: flex;
   font-size: 12px;
   font-weight: 500;
   color: #8F8F8F;
-  padding: 14px 22px 0;
-  justify-self: center;
-}
-
-/* Meme boyutunu ekran genişliğine göre ayarlama */
-@media (min-width: 768px) {
-  .memesGrid {
-    padding: 14px calc((100% - 768px) / 2 + 32px);
-  }
-}
-
-@media (min-width: 1024px) {
-  .memesGrid {
-    padding: 14px calc((100% - 1024px) / 2 + 32px);
-  }
-}
-
-@media (min-width: 1280px) {
-  .memesGrid {
-    padding: 14px calc((100% - 1280px) / 2 + 32px);
-  }
+  padding-top: 14px;
+  justify-content: center;
+  width: 100%;
 }
 
 .memeImage {
