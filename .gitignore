@@ -132,3 +132,4 @@ dist
 db
 
 .turbo
+.DS_Store

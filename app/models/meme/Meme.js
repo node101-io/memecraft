@@ -106,4 +106,4 @@ MemeSchema.statics.findMemesByFilters = function (data, callback) {
     })
 };
 
-export const Meme = mongoose.model('Meme', MemeSchema);
+export const Meme = mongoose.models.Meme || mongoose.model('Meme', MemeSchema);

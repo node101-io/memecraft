@@ -1,10 +1,14 @@
 import { User } from '../../../../../models/user/User';
 
 export async function GET(req) {
-  const body = await req.json();
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
 
-  return new Response(await new Promise((resolve, reject) => {
-    User.findUserById(body.id, (err, user) => {
+  if (!id)
+    return Response.json({ success: false, error: 'User ID is required.' });
+
+  return Response.json(await new Promise((resolve, reject) => {
+    User.findUserById(id, (err, user) => {
       if (err)
         resolve({ success: false, error: err });
 

@@ -8,6 +8,8 @@ import { MemeApi, type Meme } from '../services/memeApi';
 const ITEMS_PER_PAGE = 15;
 const FIXED_ITEMS_COUNT = 6;
 
+// TODO: all memes'teki lazy load iptal, search te frontend'de yapılacak
+
 export default function Library() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);

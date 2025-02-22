@@ -12,7 +12,7 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const COMISSION_RATE = 0.05;
-const ROOT_PUBLIC_KEY = "rootUser";
+const ROOT_PUBLIC_KEY = "0xed3b7C457c767f26F2Bab253031CFeCaf50D0f03";
 
 const UserSchema = new mongoose.Schema({
   telegram_id: {
@@ -56,31 +56,37 @@ const UserSchema = new mongoose.Schema({
 });
 
 UserSchema.statics.createUser = function (data, callback) {
-  if(!data || typeof data !== 'object')
+  if (!data || typeof data !== 'object')
     return callback('bad_request');
-  if(!data.telegram_id || typeof data.telegram_id != 'string')
-    return callback('bad_request');
-  if(!data.chopin_public_key || typeof data.chopin_public_key != 'string') // || !validator.isUUID(data.chopin_public_key))
+  
+  if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
     return callback('bad_request');
 
-  User.findUser(data, (err, user) => {
+  User.findUserByPublicKey(data.chopin_public_key, (err, user) => {
+    if (err)
+      return callback(err);
+
     if (user)
       return callback(null, user);
 
+    if (!data.telegram_id || typeof data.telegram_id != 'string')
+      return callback('bad_request');
+  
     User.create({
       telegram_id: data.telegram_id,
       chopin_public_key: data.chopin_public_key,
     })
-    .then(user => {
-      return callback(null, user);
-    })
-    .catch(err => {
-      console.log(err);
-      if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
-        return callback('duplicated_unique_field');
-      if (err)
-        return callback('database_error');
-    });
+      .then(user => {
+        return callback(null, user);
+      })
+      .catch(err => {
+        console.error(err);
+        if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
+          return callback('duplicated_unique_field');
+
+        if (err)
+          return callback('database_error');
+      });
   });
 };
 
@@ -102,9 +108,9 @@ UserSchema.statics.findUser = function (data, callback) {
     filters._id = data._id;
   }
 
-  if (Object.keys(filters).length === 0) {
+  if (Object.keys(filters).length === 0)
     return callback('bad_request');
-  }
+
   User.findOne(filters)
     .then(user => {
       if (!user) return callback('user_not_found');
@@ -117,47 +123,59 @@ UserSchema.statics.findUser = function (data, callback) {
 };
 
 UserSchema.statics.createMemeForUser = function (data, callback) {
-  if (!data.userId || !validator.isMongoId(data.userId.toString()))
+  if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
     return callback('bad_request');
-  User.findById(data.userId)
-    .then(user => {
-      if (!user) return callback('user_not_found');
 
-      if (user.timeout && data.dateNow - user.timeout < TIME_OUT_DURATION)
-        return callback('user_timed_out');
+  User.findUserByPublicKey(data.chopin_public_key, (err, user) => {
+    if (err) 
+      return callback('database_error');
 
-      if (!data.memeData || typeof data.memeData !== 'object')
-        return callback('bad_request');
-      if (!data.memeData.description || typeof data.memeData.description !== 'string')
-        return callback('bad_request');
-      if (!data.memeData.content_url || typeof data.memeData.content_url !== 'string')
-        return callback('bad_request');
-      if (!data.memeData.mint_price || typeof data.memeData.mint_price !== 'number')
-        return callback('bad_request');
+    if (!user)
+      return callback('user_not_found');
 
-      Meme.create({
-        creator: new mongoose.Types.ObjectId(data.userId),
-        description: data.memeData.description,
-        content_url: data.memeData.content_url,
-        mint_price: data.memeData.mint_price
-      })
+    if (user.timeout && data.dateNow - user.timeout < TIME_OUT_DURATION)
+      return callback('user_timed_out');
+
+    if (!data.memeData || typeof data.memeData !== 'object')
+      return callback('bad_request');
+
+    if (!data.memeData.description || typeof data.memeData.description !== 'string')
+      return callback('bad_request');
+
+    if (!data.memeData.content_url || typeof data.memeData.content_url !== 'string')
+      return callback('bad_request');
+
+    if (!data.memeData.mint_price || typeof data.memeData.mint_price !== 'number')
+      return callback('bad_request');
+
+    Meme.create({
+      creator: user._id,
+      description: data.memeData.description,
+      content_url: data.memeData.content_url,
+      mint_price: data.memeData.mint_price
+    })
       .then(newMeme => {
-        if (!newMeme) return; // Ensures execution stops if Meme creation failed
-        return User.findByIdAndUpdate(
-          data.userId,
-          { $push:
-            { minted_memes: {
+        if (!newMeme) return callback('database_error');
+
+        User.findByIdAndUpdate(user._id, { $push: {
+          minted_memes: {
             meme_id: newMeme._id,
             last_used_at: data.dateNow
-            }
-          }},
-          { new: true }
-        ).then(() => callback(null, newMeme));
+          }
+        }}, { new: true })
+          .then(() => {
+            return callback(null, newMeme)
+          })
+          .catch(err => {
+            console.log(err);
+            return callback('database_error');
+          });
       })
       .catch(err => {
         console.log(err);
         if (err && err.code == DUPLICATED_UNIQUE_FIELD_ERROR_CODE)
           return callback('duplicated_unique_field');
+
         if (err)
           return callback('database_error');
       });
@@ -361,6 +379,7 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
     });
   });
 };
+
 UserSchema.statics.findLastUsedMemesByUserId = function (userId, callback) {
   if(!userId || !validator.isMongoId(userId.toString()))
     return callback('bad_request');
@@ -370,5 +389,8 @@ UserSchema.statics.findLastUsedMemesByUserId = function (userId, callback) {
 
   })
 };
+UserSchema.statics.findRecentlyAddedMemesByUserId = function (userId, callback) {
+  // TODO: minted_memes zaten sıralı, sadece listenin son 6 elemanını al
+};
 
-export const User = mongoose.model('User', UserSchema);
+export const User = mongoose.models.User || mongoose.model('User', UserSchema);

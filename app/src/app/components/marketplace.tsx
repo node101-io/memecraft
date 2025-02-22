@@ -17,6 +17,9 @@ const POPULAR_TEMPLATES = [
 
 const ITEMS_PER_PAGE = 15;
 
+// TODO: tagler seçildikçe diğerlerinin üstünü karart, search'e yazma tagleri
+// TODO: iki buton olsun birisi get and send birisi get
+
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
