@@ -3,10 +3,12 @@ import { User } from '../../../../../../app/models/user/User';
 export async function POST(req) {
   const body = await req.json();
 
-  User.createMemeForUser(body.id, body.memeData, (err, meme) => {
-    if (err)
-      return new Response({ success: false, error: err });
-
-    return new Response({ success: true, data: meme });
+  return new Response(await new Promise((resolve, reject) => {
+    User.createMemeForUser(body.id, body.memeData, (err, meme) => {
+      if (err)
+        resolve({ success: false, error: err });
+  
+      resolve({ success: true, data: meme })
+    });
   });
 };
