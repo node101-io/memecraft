@@ -48,7 +48,7 @@ MemeSchema.statics.findMemeById = function (id, callback){
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
 
-  Meme.findById(id,)
+  Meme.findById(id)
     .then(meme => {
       if (!meme) return callback('document_not_found');
 
