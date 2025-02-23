@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import WebApp from '@twa-dev/sdk';
 
 import styles from './page.module.css';
 
@@ -10,93 +11,46 @@ import Marketplace from './components/marketplace';
 import Memecraft from './components/craft';
 import Library from './components/library';
 
-export default function Home() {
-  const [activeTab, setActiveTab] = useState('marketplace');
+export default function Home({ user_id }: { user_id: string }) {
+  const [activeTab, setActiveTab] = useState('library');
   const [user, setUser] = useState({
-    balance: 10,
-    minted_memes: [
-      {
-        meme_id: { 
-          id: '1',
-          title: 'Meme 1',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '2',
-          title: 'Meme 2',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '3',
-          title: 'Meme 3',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '4',
-          title: 'Meme 4',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '5',
-          title: 'Meme 5',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '6',
-          title: 'Meme 6',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '7',
-          title: 'Meme 7',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      },
-      {
-        meme_id: { 
-          id: '8',
-          title: 'Meme 8',
-          imageUrl: '/memes/meme-1.png',
-          price: '10',
-          owner: 'user1'
-        },
-        last_used_at: 1714000000
-      }
-    ]
+    balance: 0,
+    minted_memes: [],
+    telegram_id: '',
+    chopin_public_key: '',
   });
+
+  const [walletAddress, setWalletAddress] = useState<string>('');
+
+  useEffect(() => {
+    WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
+      if (error)
+        return console.error(error);
+
+      const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
+      const chopinData = await chopinResponse.json();
+
+      setWalletAddress(chopinData.address);
+
+      if (chopinData.address !== devAddress)
+        WebApp.CloudStorage.setItem('dev-address', chopinData.address);
+
+      const createResponse = await fetch(`/api/user/create`, {
+        method: 'POST',
+        body: JSON.stringify({
+          chopin_public_key: chopinData.address,
+          telegram_id: user_id,
+        })
+      });
+
+      const createUserData = await createResponse.json();
+
+      if (createUserData.success)
+        setUser(createUserData.data);
+
+      console.log('createUserData', createUserData);
+    });
+  }, []);
 
   return (
     <>
@@ -134,7 +88,7 @@ export default function Home() {
       <main className={styles.main}>
         {activeTab === 'marketplace' && <Marketplace />}
         {activeTab === 'memecraft' && <Memecraft />}
-        {activeTab === 'library' && <Library user={user} />}
+        {activeTab === 'library' && <Library address={walletAddress} />}
       </main>
     </>
   );

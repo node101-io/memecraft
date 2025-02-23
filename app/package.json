@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "chopd",
     "build": "next build",
     "start": "chopd",
     "lint": "next lint"
