@@ -1,8 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './marketplace.module.css';
 import Image from 'next/image';
+import WebApp from '@twa-dev/sdk';
+import {
+  MainButton,
+  SecondaryButton,
+  BottomBar,
+  BackButton
+} from '@twa-dev/sdk/react';
+
+import styles from './marketplace.module.css';
+
 import { MemeApi, type Meme } from '../services/memeApi';
 
 const POPULAR_TEMPLATES = [
@@ -46,7 +55,19 @@ export default function Marketplace() {
     setSearchTerm('');
   };
 
+  const handleBuyAndReturnClick = (meme: Meme) => {
+    // TODO: buy meme apisini çağır meme id ile
+
+    WebApp.switchInlineQuery('');
+  };
+
+  const handleBuyClick = (meme: Meme) => {
+    // TODO: buy meme apisini çağır meme id ile
+    setSelectedMeme(null);
+  };
+
   useEffect(() => {
+    console.log('WebApp.initDataUnsafe', WebApp.initDataUnsafe);
     const debounceTimer = setTimeout(async () => {
       setResults([]);
       setPage(0);
@@ -224,15 +245,19 @@ export default function Marketplace() {
               >
                 Creator: {selectedMeme.owner}
               </span>
-              <button className={styles.buyButton}>
-                Get for {selectedMeme.price}
+              <div className={styles.modalPrice}>
+                {selectedMeme.price}
                 <Image 
                   src="/token/token.svg"
                   alt="Token"
-                  width={12}
-                  height={12}
+                  width={17}
+                  height={17}
                 />
-              </button>
+              </div>
+              <BottomBar bgColor='#D0D0D0'>
+                <MainButton text="Buy and return chat" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyAndReturnClick(selectedMeme)}/>
+                <SecondaryButton text="Buy" color='#D0D0D0' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
+              </BottomBar>
             </div>
           </div>
         </div>
