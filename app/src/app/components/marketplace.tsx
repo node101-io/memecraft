@@ -131,12 +131,11 @@ export default function Marketplace() {
 
   return (
     <>
-      <MainButton text="Main Button" />
-      <SecondaryButton text="Secondary Button" />
-      <BottomBar>
-        <SecondaryButton text="Secondary Button" />
+      <BottomBar bgColor='#D0D0D0'>
+        <MainButton text="Main Button" color='#e29cff' textColor='#510e2a'/>
+        <SecondaryButton text="Secondary Button" color='#e29cff' textColor='#510e2a'/>
       </BottomBar>
-      <BackButton />
+      {/* <BackButton onClick={() => {}} /> */}
       <div className={styles.searchWrapper}>
         <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="10" cy="10" r="7"></circle>
