@@ -35,7 +35,7 @@ export default function Home() {
       if (chopinData.address !== devAddress)
         WebApp.CloudStorage.setItem('dev-address', chopinData.address);
 
-      const response = await fetch(`/api/user/show?chopin_public_key=${walletAddress}`);
+      const response = await fetch(`/api/user/show?chopin_public_key=${chopinData.address}`);
       const userData = await response.json();
 
       setUser(userData.data);
