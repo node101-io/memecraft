@@ -129,10 +129,15 @@
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  transform: scale(1);
 }
 
-.templateItem:hover {
+.templateItem.selected {
   transform: scale(1.05);
+}
+
+.templateItem.dimmed {
+  opacity: 0.4;
 }
 
 @keyframes pulse {
@@ -277,3 +282,24 @@
   100% { transform: rotate(360deg); }
 }
 
+.creatorFilter {
+  display: flex;
+  justify-content: center;
+  padding: 6px 32px;
+  padding-top: 0;
+  color: #8f8f8f;
+  border-radius: 5px;
+  font-size: 14px;
+  gap: 6px;
+}
+
+.clearFilterButton {
+  background: none;
+  border: none;
+  fill: #8f8f8f;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  width: 12px;
+  height: 12px;
+}

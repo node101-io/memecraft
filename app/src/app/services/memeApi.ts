@@ -25,16 +25,22 @@ export class MemeApi {
   static async searchMemes(
     searchTerm: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    tags: string[] = []
   ): Promise<MemeApiResponse> {
-    // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
     let filteredMemes = [...MOCK_MEMES];
     
     if (searchTerm.trim()) {
-      filteredMemes = MOCK_MEMES.filter(meme => 
+      filteredMemes = filteredMemes.filter(meme => 
         meme.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (tags.length > 0) {
+      filteredMemes = filteredMemes.filter(meme =>
+        tags.some(tag => meme.title.toLowerCase().includes(tag.toLowerCase()))
       );
     }
 
