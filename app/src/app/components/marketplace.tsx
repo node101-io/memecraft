@@ -131,11 +131,6 @@ export default function Marketplace() {
 
   return (
     <>
-      <BottomBar bgColor='#D0D0D0'>
-        <MainButton text="Main Button" color='#e29cff' textColor='#510e2a'/>
-        <SecondaryButton text="Secondary Button" color='#e29cff' textColor='#510e2a'/>
-      </BottomBar>
-      {/* <BackButton onClick={() => {}} /> */}
       <div className={styles.searchWrapper}>
         <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="10" cy="10" r="7"></circle>
@@ -250,18 +245,19 @@ export default function Marketplace() {
               >
                 Creator: {selectedMeme.owner}
               </span>
-              <button 
-                className={styles.buyButton}
-                onClick={() => handleBuyClick(selectedMeme)}
-              >
-                Get for {selectedMeme.price}
+              <div className={styles.modalPrice}>
+                {selectedMeme.price}
                 <Image 
                   src="/token/token.svg"
                   alt="Token"
-                  width={12}
-                  height={12}
+                  width={17}
+                  height={17}
                 />
-              </button>
+              </div>
+              <BottomBar bgColor='#D0D0D0'>
+                <MainButton text="Buy and Send" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
+                <SecondaryButton text="Buy" color='#D0D0D0' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
+              </BottomBar>
             </div>
           </div>
         </div>
