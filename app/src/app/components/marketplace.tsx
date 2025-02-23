@@ -56,11 +56,7 @@ export default function Marketplace() {
   };
 
   const handleBuyAndSendClick = (meme: Meme) => {
-    // TODO: buy meme apisini çağır meme id ile
-    WebApp.showPopup({
-      title: 'Buy Meme',
-      message: 'Are you sure you want to buy this meme?',
-    });
+    WebApp.switchInlineQuery(meme.id);
   };
 
   const handleBuyClick = (meme: Meme) => {
