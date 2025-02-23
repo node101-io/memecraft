@@ -37,9 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Head>
+      <head>
         <Script src="https://telegram.org/js/telegram-web-app.js?56" strategy="beforeInteractive" />
-      </Head>
+      </head>
       <body className={`${sfProText.variable}`}>
         {children}
       </body>

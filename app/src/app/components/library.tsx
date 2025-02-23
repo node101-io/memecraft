@@ -36,7 +36,9 @@ export default function Library({ address }: { address: string; }) {
       const response = await fetch(`/api/user/show?chopin_public_key=${address}`);
       const userData = await response.json();
 
-      setUser(userData.data);
+      console.log('userData', userData);
+      if (userData.success)
+        setUser(userData.data);
     };
 
     fetchUser();

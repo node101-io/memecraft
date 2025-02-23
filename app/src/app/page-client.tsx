@@ -11,7 +11,7 @@ import Marketplace from './components/marketplace';
 import Memecraft from './components/craft';
 import Library from './components/library';
 
-export default function Home() {
+export default function Home({ user_id }: { user_id: string }) {
   const [activeTab, setActiveTab] = useState('library');
   const [user, setUser] = useState({
     balance: 0,
@@ -23,8 +23,6 @@ export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string>('');
 
   useEffect(() => {
-    console.log('WebApp.initDataUnsafe', WebApp);
-
     WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
       if (error)
         return console.error(error);
@@ -41,12 +39,15 @@ export default function Home() {
         method: 'POST',
         body: JSON.stringify({
           chopin_public_key: chopinData.address,
-          telegram_id: WebApp?.initDataUnsafe?.user?.id,
+          telegram_id: user_id,
         })
       });
 
       const createUserData = await createResponse.json();
-      setUser(createUserData.data);
+
+      if (createUserData.success)
+        setUser(createUserData.data);
+
       console.log('createUserData', createUserData);
     });
   }, []);

@@ -1,5 +1,5 @@
 {
-  "command": "next start",
+  "command": "next dev",
   "proxyPort": 4000,
   "targetPort": 3000
 }
