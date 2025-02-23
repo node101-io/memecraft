@@ -76,7 +76,7 @@ export default function Marketplace() {
   };
 
   useEffect(() => {
-    console.log(WebApp.initDataUnsafe);
+    console.log('WebApp.initDataUnsafe', WebApp.initDataUnsafe);
     const debounceTimer = setTimeout(async () => {
       setResults([]);
       setPage(0);
