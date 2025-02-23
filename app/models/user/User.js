@@ -368,16 +368,6 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
   });
 };
 
-UserSchema.statics.findLastUsedMemesByUserId = function (userId, callback) {
-  if(!userId || !validator.isMongoId(userId.toString()))
-    return callback('bad_request');
-  User.findUserById(userId, (err, user) => {
-    if (err) return callback(err);
-
-
-  })
-};
-
 UserSchema.statics.findRecentlyAddedMemesByPublicKey = function (publicKey, callback) {
   if (!publicKey || typeof publicKey !== 'string')
     return callback('bad_request');
@@ -395,6 +385,54 @@ UserSchema.statics.findRecentlyAddedMemesByPublicKey = function (publicKey, call
     const recentlyAddedMemes = user.minted_memes.slice(-DEFAULT_RECENTLY_ADDED_MEMES_COUNT).map(memeObj => memeObj);
 
     return callback(null, recentlyAddedMemes);
+  });
+};
+
+UserSchema.statics.findMemeByIdAndMarkAsUsed = function (data, callback) {
+  if (!data || typeof data !== 'object')
+    return callback('bad_request');
+
+  Meme.findMemeById(data.memeId, (err, meme) => {
+    if (err)
+      return callback(err);
+
+    if (!meme)
+      return callback('meme_not_found');
+
+    if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
+      return callback('bad_request');
+
+    if (!data.dateNow || typeof data.dateNow !== 'number')
+      return callback('bad_request');
+
+    User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
+      if (err)
+        return callback(err);
+
+      if (!user)
+        return callback('user_not_found');
+
+      if (!user.minted_memes || user.minted_memes.length === 0)
+        return callback('meme_not_found');
+
+      const memeIndex = user.minted_memes.findIndex(memeObj => memeObj.meme_id.toString() === data.memeId.toString());
+
+      if (memeIndex === -1)
+        return callback('meme_not_found');
+
+      User.findByIdAndUpdate(
+        user._id,
+        { $set: { [`minted_memes.${memeIndex}.last_used_at`]: data.dateNow } },
+        { new: true }
+      )
+        .then(updatedUser => {
+          if (!updatedUser)
+            return callback('user_not_found');
+
+          return callback(null, updatedUser);
+        })
+        .catch(_ => callback('database_error'));
+    });
   });
 };
 
