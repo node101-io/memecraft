@@ -12,8 +12,8 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
 const DEFAULT_RECENTLY_ADDED_MEMES_COUNT = 6;
-const COMISSION_RATE = 0.05;
-const ROOT_PUBLIC_KEY = "0xed3b7C457c767f26F2Bab253031CFeCaf50D0f03";
+const PLATFORM_COMISSION_RATE = 0.05;
+const MEMECRAFT_PUBLIC_KEY = "0xed3b7C457c767f26F2Bab253031CFeCaf50D0f03";
 
 const UserSchema = new mongoose.Schema({
   telegram_id: {
@@ -293,69 +293,76 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes 
 };
 
 UserSchema.statics.purchaseMemeById = function (data, callback) {
-  if (!data.buyerId || !validator.isMongoId(data.buyerId.toString()))
+  if (!data || typeof data !== 'object')
     return callback('bad_request');
+
+  if (!data.buyerPublicKey || typeof data.buyerPublicKey !== 'string')
+    return callback('bad_request');
+
   if (!data.memeId || !validator.isMongoId(data.memeId.toString()))
     return callback('bad_request');
 
-  User.findUserById(data.buyerId, (err, user) => {
-    if (err) return callback('database_error');
-    if (!user) return callback('user_not_found');
+  User.findUserByPublicKey(data.buyerPublicKey, false, (err, buyer) => {
+    if (err)
+      return callback('database_error');
+
+    if (!buyer)
+      return callback('buyer_not_found');
 
     Meme.findMemeById(data.memeId, (err, meme) => {
-      if (err) return callback('database_error');
-      if (!meme) return callback('meme_not_found');
+      if (err)
+        return callback('database_error');
 
-      if(meme.creator == data.buyerId)
-        return callback ('invalid_purchase');
+      if (!meme)
+        return callback('meme_not_found');
 
-      if (user.balance < meme.mint_price)
+
+      if (buyer.balance < meme.mint_price)
         return callback('insufficient_balance');
 
-      User.findUserById(meme.creator, (err, creatorUser) => {
-        if (err) return callback('database_error');
-        if (!creatorUser) return callback('creator_not_found');
+      User.findUserById(meme.creator, (err, creator) => {
+        if (err)
+          return callback('database_error');
+
+        if (!creator)
+          return callback('creator_not_found');
 
         User.findByIdAndUpdate(
-          data.buyerId,
+          buyer._id,
           {
             $inc: { balance: -meme.mint_price },
             $push: { minted_memes:{
                 meme_id: meme._id,
                 last_used_at: data.dateNow
             }}
-          },
+          }
         )
-        .then(updatedUser => {
-          if (!updatedUser) return callback('database_error');
-
-          const COMISSION = meme.mint_price * COMISSION_RATE;
+        .then(() => {
+          const platformComission = meme.mint_price * PLATFORM_COMISSION_RATE;
+          const creatorPayment = meme.mint_price - platformComission;
 
           User.findByIdAndUpdate(
             meme.creator,
-            { $inc: { balance: meme.mint_price - COMISSION } }
+            { $inc: { balance: creatorPayment } }
           )
           .then(() => {
-            User.findUserByPublicKey(ROOT_PUBLIC_KEY, false, (err, memeGenerator) => {
+            User.findUserByPublicKey(MEMECRAFT_PUBLIC_KEY, false, (err, memecraft) => {
               if (err)
                 return callback(err);
-              if (!memeGenerator)
+
+              if (!memecraft)
                 return callback('ERROR!');
 
-              User.findByIdAndUpdate(memeGenerator._id, { $inc: { balance: COMISSION } })
+              User.findByIdAndUpdate(memecraft._id, { $inc: { balance: platformComission } })
                 .then(() => {
                   return callback(null);
                 })
-                .catch(err => {
-                  return callback('database_error');
-                });
+                .catch(_ => callback('database_error'));
             })
             return callback(null);
           })
-          .catch(err => {
-            return callback('database_error');
-          });
-        })
+          .catch(_ => callback('database_error'));
+        });
       });
     });
   });
