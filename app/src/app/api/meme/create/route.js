@@ -1,103 +1,87 @@
-import crypto from 'crypto';
 import { Oracle } from '@chopinframework/next';
 
 import { User } from '../../../../../../app/models/user/User';
 
-const PIN_FILE_TO_IPFS_URL = "https://api.pinata.cloud/pinning/pinFileToIPFS";
+import connectDB from '../../../../../lib/db';
+import { createPinataFormData } from '../../../../../utils/createPinataFormData';
+
+const DEFAULT_MEME_MINT_PRICE = 0.1;
+const PIN_FILE_TO_IPFS_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 export async function POST(req) {
-  // user banlı mı kontrol edilecek
-  // ilk önce ai'a atılacak, description ve tagler üretilecek, content uygunsuz olursa timeout user fonku çağırılacak
-  // ipfs'ten content url alınacak
-  // create meme fonksiyonu çağırılacak
+  const body = await req.json();
 
-  // TODO: organize and check user before uploading meme
+  if (!body.file)
+    return Response.json({ success: false, error: 'Meme is not provided.' });
 
-  try {
-    const body = await req.json();
+  if (!body.file.startsWith('data:image/png;base64,'))
+    return Response.json({ success: false, error: 'Invalid image format. Only PNG files are supported.' });
 
-    if (!body.file)
-      return Response.json({ success: false, error: 'Meme is not provided.' });
-
-    if (!body.file.startsWith('data:image/png;base64,'))
-      return Response.json({ success: false, error: 'Invalid image format. Only PNG files are supported.' });
-
-    const base64Data = body.file.replace(/^data:image\/png;base64,/, '');
-    const fileBuffer = Buffer.from(base64Data, 'base64');
-
-    const randomName = crypto.randomBytes(8).toString('hex');
-    const fileName = `${randomName}.png`;
-
-    const boundary = '----WebKitFormBoundary' + crypto.randomBytes(16).toString('hex');
-
-    const formParts = [];
-
-    formParts.push(
-      `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="file"; filename="${fileName}"\r\n` +
-      `Content-Type: image/png\r\n\r\n`
-    );
-    formParts.push(fileBuffer);
-    formParts.push('\r\n');
-
-    formParts.push(
-      `--${boundary}\r\n` +
-      'Content-Disposition: form-data; name="pinataMetadata"\r\n\r\n' +
-      JSON.stringify({
-        name: fileName,
-        keyvalues: {
-          type: 'image/png'
-        }
-      }) +
-      '\r\n'
-    );
-
-    formParts.push(
-      `--${boundary}\r\n` +
-      'Content-Disposition: form-data; name="pinataOptions"\r\n\r\n' +
-      JSON.stringify({ cidVersion: 1 }) +
-      '\r\n'
-    );
-
-    formParts.push(`--${boundary}--\r\n`);
-
-    const formBody = Buffer.concat(
-      formParts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part))
-    );
-
-    const jwtToken = process.env.PINATA_JWT;
-
-    // TODO: Use Oracle.fetch() instead
-    const response = await fetch(PIN_FILE_TO_IPFS_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwtToken}`,
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        'Accept': 'application/json'
-      },
-      body: formBody
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return Response.json({ success: false, error: errorData });
+  const data = {
+    chopin_public_key: body.chopin_public_key,
+    dateNow: await Oracle.now(),
+    memeData: {
+      content_url: body.content_url,
+      description: body.memeData.description,
+      mint_price: body.mint_price || DEFAULT_MEME_MINT_PRICE
     }
+  };
 
-    const data = await response.json();
-    const ipfsHash = data.IpfsHash;
-    body.memeData.content_url = ipfsHash;
+  await connectDB();
 
-    console.log(ipfsHash);
+  return Response.json(await new Promise((resolve) => {
+    User.checkIfUserIsTimedOut(data, async (err, isTimedOut) => {
+      if (err)
+        resolve({ success: false, error: err });
 
-    return Response.json(await new Promise((resolve) => {
+      if (isTimedOut)
+        resolve({ success: false, error: 'User is timed out.' });
+
+      // TODO: Desc and tags. Is harmful to the user. It is mocked.
+      const aiResponse = {
+        is_harmful_content: false,
+        tags: [ 'frog', 'doge', 'meme', 'musk' ],
+        description: 'Doge ate Musk. Frog is watching.'
+      };
+
+      if (aiResponse.is_harmful_content)
+        return User.timeoutUserByPublicKey(data, (err) => {
+          if (err)
+            resolve({ success: false, error: err });
+
+          resolve({ success: false, error: 'Meme contains harmful content. You have been timed out for 24 hours.' });
+        });
+
+      data.memeData.tags = aiResponse.tags;
+      data.memeData.description = aiResponse.description;
+
+      const { boundary, formBody } = await createPinataFormData(body.file);
+
+      // TODO: Use Oracle.fetch() instead
+      const pinataResponse = await fetch(PIN_FILE_TO_IPFS_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PINATA_JWT}`,
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Accept': 'application/json'
+        },
+        body: formBody
+      });
+
+      if (!pinataResponse.ok)
+        resolve({ success: false, error: await pinataResponse.json() });
+
+      const pinataData = await pinataResponse.json();
+
+      if (data.memeData && !data.memeData.content_url)
+        data.memeData.content_url = `https://ipfs.io/ipfs/${pinataData.IpfsHash}`;
+
       User.createMemeForUser(data, (err, meme) => {
         if (err)
           resolve({ success: false, error: err });
 
         resolve({ success: true, data: meme })
       });
-    }));
-  } catch (error) {
-    return Response.json({ success: false, error: error.message });
-  }
-}
+    });
+  }));
+};
