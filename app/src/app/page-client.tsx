@@ -30,6 +30,8 @@ export default function Home({ user_id }: { user_id: string }) {
       const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
       const chopinData = await chopinResponse.json();
 
+      document.cookie = `dev-address=${chopinData.address}`;
+
       setWalletAddress(chopinData.address);
 
       if (chopinData.address !== devAddress)

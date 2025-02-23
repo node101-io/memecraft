@@ -12,8 +12,6 @@ import {
 
 import styles from './marketplace.module.css';
 
-import { MemeApi, type Meme } from '../services/memeApi';
-
 const POPULAR_TEMPLATES = [
   { id: 'pepe', src: '/templates/template-pepe.png', alt: 'Pepe' },
   { id: 'cat', src: '/templates/template-cat.png', alt: 'Grumpy Cat' },
@@ -21,10 +19,19 @@ const POPULAR_TEMPLATES = [
   { id: 'rage', src: '/templates/template-rage.png', alt: 'Rage Comic' },
   { id: 'troll', src: '/templates/template-troll.png', alt: 'Troll Face' },
   { id: 'elon', src: '/templates/template-elon.png', alt: 'Elon' },
-  { id: 'yao', src: '/templates/template-yao.png', alt: 'Yao Ming' },
+  { id: 'frog', src: '/templates/template-yao.png', alt: 'Yao Ming' },
 ];
 
 const ITEMS_PER_PAGE = 15;
+
+interface Meme {
+  _id: string;
+  content_url: string;
+  description: string;
+  mint_price: number;
+  tags: string[];
+  creator: string;
+}
 
 export default function Marketplace() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,14 +62,26 @@ export default function Marketplace() {
     setSearchTerm('');
   };
 
-  const handleBuyAndReturnClick = (meme: Meme) => {
-    // TODO: buy meme apisini çağır meme id ile
+  const handleBuyAndReturnClick = async (meme: Meme) => {
+    await handleBuyClick(meme);
 
     WebApp.switchInlineQuery('');
   };
 
-  const handleBuyClick = (meme: Meme) => {
-    // TODO: buy meme apisini çağır meme id ile
+  const handleBuyClick = async (meme: Meme) => {
+    const response = await fetch('/api/meme/mint', {
+      method: 'POST',
+      body: JSON.stringify({
+        memeId: meme._id
+      })
+    });
+    const data = await response.json();
+
+    if (!data.success) {
+      console.error('Error buying meme:', data.error);
+      return;
+    };
+
     setSelectedMeme(null);
   };
 
@@ -75,10 +94,17 @@ export default function Marketplace() {
       
       try {
         setIsLoading(true);
-        const response = await MemeApi.searchMemes(searchTerm, 0, ITEMS_PER_PAGE, selectedTags);
-        setResults(response.memes);
-        setHasMore(response.hasMore);
-        setPage(1);
+        // const response = await MemeApi.searchMemes(searchTerm, 0, ITEMS_PER_PAGE, selectedTags);
+
+        const response = await fetch(`/api/meme/filter?creator=${creatorFilter}&tags=${selectedTags.join(',')}&description=${searchTerm}&skip=${page * ITEMS_PER_PAGE}&limit=${ITEMS_PER_PAGE}`);
+        const data = await response.json();
+
+        console.log('memesfilter', data);
+        if (data.success) {
+          setResults(data.data);
+          // setHasMore(data.hasMore);
+          setPage(1);
+        };
       } catch (error) {
         console.error('Search error:', error);
       } finally {
@@ -95,10 +121,14 @@ export default function Marketplace() {
 
     setIsLoading(true);
     try {
-      const response = await MemeApi.searchMemes(searchTerm, page, ITEMS_PER_PAGE, selectedTags);
-      setResults(prev => [...prev, ...response.memes]);
-      setHasMore(response.hasMore);
-      setPage(prev => prev + 1);
+      const response = await fetch(`/api/meme/filter?creator=${creatorFilter}&tags=${selectedTags.join(',')}&description=${searchTerm}&skip=${page * ITEMS_PER_PAGE}&limit=${ITEMS_PER_PAGE}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setResults(prev => [...prev, ...data.data]);
+        setHasMore(data.hasMore);
+        setPage(prev => prev + 1);
+      };
     } catch (error) {
       console.error('Loading error:', error);
     } finally {
@@ -106,7 +136,6 @@ export default function Marketplace() {
     }
   }, [page, hasMore, isLoading, searchTerm, selectedTags]);
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
@@ -126,7 +155,7 @@ export default function Marketplace() {
 
   // Filter results based on creator
   const filteredResults = creatorFilter 
-    ? results.filter(meme => meme.owner === creatorFilter) 
+    ? results.filter(meme => meme.creator === creatorFilter) 
     : results;
 
   return (
@@ -179,21 +208,21 @@ export default function Marketplace() {
       <div className={styles.resultsGrid}>
         {filteredResults.map((item) => (
           <div 
-            key={item.id} 
+            key={item._id} 
             className={styles.resultItem}
             onClick={() => handleMemeClick(item)}
             role="button"
             tabIndex={0}
           >
             <Image 
-              src={item.imageUrl} 
-              alt={item.title || 'Meme'} 
+              src={item.content_url} 
+              alt={item.description || 'Meme'} 
               width={96} 
               height={96}
               className={styles.memeImage}
             />
             <div className={styles.priceTag}>
-              {item.price}
+              {item.mint_price}
               <Image 
                 src="/token/token.svg"
                 alt="Token"
@@ -227,8 +256,8 @@ export default function Marketplace() {
             onClick={e => e.stopPropagation()}
           >
             <Image 
-              src={selectedMeme.imageUrl}
-              alt={selectedMeme.title || 'Meme'}
+              src={selectedMeme.content_url}
+              alt={selectedMeme.description || 'Meme'}
               width={400}
               height={400}
               className={styles.modalImage}
@@ -237,16 +266,16 @@ export default function Marketplace() {
               <span 
                 className={styles.ownerAddress}
                 onClick={() => {
-                  setCreatorFilter(selectedMeme.owner);
+                  setCreatorFilter(selectedMeme.creator);
                   setSelectedMeme(null);
                 }}
                 role="button"
                 tabIndex={0}
               >
-                Creator: {selectedMeme.owner}
+                Creator: {selectedMeme.creator}
               </span>
               <div className={styles.modalPrice}>
-                {selectedMeme.price}
+                {selectedMeme.mint_price}
                 <Image 
                   src="/token/token.svg"
                   alt="Token"
@@ -254,7 +283,7 @@ export default function Marketplace() {
                   height={17}
                 />
               </div>
-              <BottomBar bgColor='#D0D0D0'>
+              <BottomBar bgColor='#D9DADB'>
                 <MainButton text="Buy and return chat" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyAndReturnClick(selectedMeme)}/>
                 <SecondaryButton text="Buy" color='#D0D0D0' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
               </BottomBar>

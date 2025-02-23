@@ -6,7 +6,9 @@ export default async function Home({ searchParams }: { searchParams: { user_id: 
   const address = await getAddress();
   console.log(address)
 
+  const { user_id } = await searchParams;
+
   return (
-    <PageClient user_id={searchParams.user_id} />
+    <PageClient user_id={user_id} />
   );
 }

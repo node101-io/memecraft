@@ -1,12 +1,14 @@
 import { User } from '../../../../../models/user/User';
+import { getAddress } from '@chopinframework/next';
 
 import connectDB from '../../../../../lib/db';
 
 export async function POST(req) {
   const body = await req.json();
 
+  console.log('body', body);
   const data = {
-    buyerPublicKey: body.buyerPublicKey,
+    buyerPublicKey: await getAddress(),
     memeId: body.memeId
   };
 

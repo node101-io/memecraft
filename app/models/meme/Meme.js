@@ -75,34 +75,32 @@ MemeSchema.statics.findMemeById = function (id, callback){
 MemeSchema.statics.findMemesByFilters = function (data, callback) {
   const filters = [];
 
-  if (data.creator) {
+  if (data.creator)
     filters.push({ creator: data.creator });
-  }
 
-  if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+  if (data.tags && Array.isArray(data.tags) && data.tags.length > 0)
     filters.push({ tags: { $in: data.tags } });
-  }
 
-  if (data.description && typeof data.description === 'string' && data.description.length > 0) {
+  if (data.description && typeof data.description === 'string' && data.description.length > 0)
     filters.push({ description: { $regex: data.description, $options: 'i' } });
-  }
 
   const skip = data.skip || 0;
   const limit = data.limit || 10;
 
-  Meme.find(filters.length ? { $and: filters } : {})
+  Meme
+    .find(filters.length ? { $and: filters } : {})
     .sort()
     .skip(skip)
     .limit(limit)
-    .then(meme => {
-      if(!meme)
+    .then(memes => {
+      if(!memes)
         return callback('document_not_found');
 
-      return callback(null, meme);
+      return callback(null, memes);
     })
     .catch(err => {
-      if(err)
-        return callback ('database_error');
+      console.error(123, err);
+      return callback ('database_error');
     })
 };
 
