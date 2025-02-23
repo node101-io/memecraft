@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './marketplace.module.css';
 import Image from 'next/image';
+import WebApp from '@twa-dev/sdk';
+
+import styles from './marketplace.module.css';
+
 import { MemeApi, type Meme } from '../services/memeApi';
 
 const POPULAR_TEMPLATES = [
@@ -44,6 +47,18 @@ export default function Marketplace() {
   const clearCreatorFilter = () => {
     setCreatorFilter(null);
     setSearchTerm('');
+  };
+
+  const handleBuyClick = (meme: Meme) => {
+    // TODO: buy meme apisini çağır meme id ile
+    WebApp.showPopup({
+      title: 'Buy Meme',
+      message: 'Are you sure you want to buy this meme?',
+      buttons: [
+        { text: 'Cancel', type: 'default' },
+        { text: 'Buy', type: 'default' },
+      ],
+    });
   };
 
   useEffect(() => {
@@ -224,7 +239,10 @@ export default function Marketplace() {
               >
                 Creator: {selectedMeme.owner}
               </span>
-              <button className={styles.buyButton}>
+              <button 
+                className={styles.buyButton}
+                onClick={() => handleBuyClick(selectedMeme)}
+              >
                 Get for {selectedMeme.price}
                 <Image 
                   src="/token/token.svg"
