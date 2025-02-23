@@ -47,11 +47,7 @@ export default function Home() {
 
       const createUserData = await createResponse.json();
       setUser(createUserData.data);
-
-      const response = await fetch(`/api/user/show?chopin_public_key=${chopinData.address}`);
-      const userData = await response.json();
-
-      setUser(userData.data);
+      console.log('createUserData', createUserData);
     });
   }, []);
 
@@ -91,7 +87,7 @@ export default function Home() {
       <main className={styles.main}>
         {activeTab === 'marketplace' && <Marketplace />}
         {activeTab === 'memecraft' && <Memecraft />}
-        {activeTab === 'library' && <Library user={user} />}
+        {activeTab === 'library' && <Library address={walletAddress} />}
       </main>
     </>
   );

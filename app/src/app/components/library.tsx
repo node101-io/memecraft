@@ -1,44 +1,71 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './library.module.css';
 import Image from 'next/image';
-import { type Meme } from '../services/memeApi';
 
 const FIXED_ITEMS_COUNT = 6;
 
-interface LibraryProps {
-  user: {
+export default function Library({ address }: { address: string; }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [user, setUser] = useState<{
+    chopin_public_key: string;
+    telegram_id: string;
+    balance: number;
     minted_memes: {
-      meme_id: Meme;
+      meme: {
+        id: string;
+        description: string;
+        tags: string[];
+        content_url: string;
+        mint_price: number;
+      };
       last_used_at: number;
     }[];
-  };
-}
+  }>({
+    minted_memes: [],
+    chopin_public_key: '',
+    telegram_id: '',
+    balance: 0,
+  });
 
-export default function Library({ user }: LibraryProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  useEffect(() => {
+    const fetchUser = async () => {
+      const response = await fetch(`/api/user/show?chopin_public_key=${address}`);
+      const userData = await response.json();
 
-  const allMemes = user.minted_memes.map(item => item.meme_id);
+      setUser(userData.data);
+    };
+
+    fetchUser();
+  }, []);
+
+  const allMemes = user.minted_memes.map(item => item.meme);
 
   const recentMemes = allMemes.slice(-FIXED_ITEMS_COUNT);
 
   const lastUsedMemes = [...user.minted_memes]
     .sort((a, b) => b.last_used_at - a.last_used_at)
     .slice(0, FIXED_ITEMS_COUNT)
-    .map(item => item.meme_id);
+    .map(item => item.meme);
 
   const filteredMemes = searchTerm.trim()
-    ? allMemes.filter(meme => meme.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    ? allMemes.filter(meme => meme.description.toLowerCase().includes(searchTerm.toLowerCase()))
     : allMemes;
 
-  const renderMemeGrid = (memes: Meme[], section: string) => (
+  const renderMemeGrid = (memes: {
+    id: string;
+    description: string;
+    tags: string[];
+    content_url: string;
+    mint_price: number;
+  }[], section: string) => (
     <div className={styles.memesGrid}>
       {memes.length > 0 ? memes.map((meme) => (
         <div key={`${section}-${meme.id}`} className={styles.memeItem}>
           <Image 
-            src={meme.imageUrl} 
-            alt={meme.title} 
+            src={meme.content_url} 
+            alt={meme.description} 
             width={96} 
             height={96}
             className={styles.memeImage}
@@ -78,8 +105,8 @@ export default function Library({ user }: LibraryProps) {
           filteredMemes.map((meme) => (
             <div key={`all-${meme.id}`} className={styles.memeItem}>
               <Image 
-                src={meme.imageUrl} 
-                alt={meme.title} 
+                src={meme.content_url} 
+                alt={meme.description} 
                 width={96} 
                 height={96}
                 className={styles.memeImage}
