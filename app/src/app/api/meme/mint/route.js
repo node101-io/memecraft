@@ -6,11 +6,12 @@ import connectDB from '../../../../../lib/db';
 export async function POST(req) {
   const body = await req.json();
 
-  console.log('body', body);
   const data = {
     buyerPublicKey: await getAddress(),
     memeId: body.memeId
   };
+
+  console.log('data', data);
 
   await connectDB();
 

@@ -13,9 +13,9 @@ import {
 import styles from './marketplace.module.css';
 
 const POPULAR_TEMPLATES = [
-  { id: 'pepe', src: '/templates/template-pepe.png', alt: 'Pepe' },
-  { id: 'cat', src: '/templates/template-cat.png', alt: 'Grumpy Cat' },
-  { id: 'doge', src: '/templates/template-doge.png', alt: 'Doge' },
+  { id: 'pepe', src: '/templates/template-pepe.png', alt: 'ilginç' },
+  { id: 'cat', src: '/templates/template-cat.png', alt: 'ilginç' },
+  { id: 'doge', src: '/templates/template-doge.png', alt: 'ilginç' },
   { id: 'rage', src: '/templates/template-rage.png', alt: 'Rage Comic' },
   { id: 'troll', src: '/templates/template-troll.png', alt: 'Troll Face' },
   { id: 'elon', src: '/templates/template-elon.png', alt: 'Elon' },
@@ -33,7 +33,16 @@ interface Meme {
   creator: string;
 }
 
-export default function Marketplace() {
+interface SearchResponse {
+  success: boolean;
+  data: Meme[];
+  hasMore: boolean;
+  error?: string;
+}
+
+export default function Marketplace({ user }: { user: {
+  balance: number;
+} }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,31 +53,26 @@ export default function Marketplace() {
   const [creatorFilter, setCreatorFilter] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const handleTemplateClick = (tag: string) => {
+  const handleTemplateClick = useCallback((tag: string) => {
     setSelectedTags(prev => {
       const newTags = prev.includes(tag) 
         ? prev.filter(t => t !== tag)
         : [...prev, tag];
       return newTags;
     });
-  };
+  }, []);
 
-  const handleMemeClick = (meme: Meme) => {
+  const handleMemeClick = useCallback(async (meme: Meme) => {
     setSelectedMeme(meme);
-  };
+    await handleBuyClick(meme); // TODO: remove this
+  }, []);
 
-  const clearCreatorFilter = () => {
+  const clearCreatorFilter = useCallback(() => {
     setCreatorFilter(null);
     setSearchTerm('');
-  };
+  }, []);
 
-  const handleBuyAndReturnClick = async (meme: Meme) => {
-    await handleBuyClick(meme);
-
-    WebApp.switchInlineQuery('');
-  };
-
-  const handleBuyClick = async (meme: Meme) => {
+  const handleBuyClick = useCallback(async (meme: Meme) => {
     const response = await fetch('/api/meme/mint', {
       method: 'POST',
       body: JSON.stringify({
@@ -80,61 +84,74 @@ export default function Marketplace() {
     if (!data.success) {
       console.error('Error buying meme:', data.error);
       return;
-    };
+    }
 
     setSelectedMeme(null);
-  };
+  }, []);
+
+  const handleBuyAndReturnClick = useCallback(async (meme: Meme) => {
+    await handleBuyClick(meme);
+    WebApp.switchInlineQuery('');
+  }, [handleBuyClick]);
+
+  const fetchResults = useCallback(async (skipCount: number) => {
+    try {
+      const response = await fetch(`/api/meme/filter?` + 
+        `skip=${skipCount}&limit=${ITEMS_PER_PAGE}` + 
+        (creatorFilter ? `&creator=${creatorFilter}` : '') + 
+        (selectedTags.length > 0 ? `&tags=${selectedTags.join(',')}` : '') + 
+        (searchTerm ? `&description=${searchTerm}` : ''));
+      
+      const data: SearchResponse = await response.json();
+
+      if (!data.success) {
+        console.error('Search failed:', data.error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Search error:', error);
+      return null;
+    }
+  }, [creatorFilter, selectedTags, searchTerm]);
 
   useEffect(() => {
-    console.log('WebApp.initDataUnsafe', WebApp.initDataUnsafe);
     const debounceTimer = setTimeout(async () => {
       setResults([]);
       setPage(0);
       setHasMore(true);
+      setIsLoading(true);
       
-      try {
-        setIsLoading(true);
-        // const response = await MemeApi.searchMemes(searchTerm, 0, ITEMS_PER_PAGE, selectedTags);
-
-        const response = await fetch(`/api/meme/filter?creator=${creatorFilter}&tags=${selectedTags.join(',')}&description=${searchTerm}&skip=${page * ITEMS_PER_PAGE}&limit=${ITEMS_PER_PAGE}`);
-        const data = await response.json();
-
-        console.log('memesfilter', data);
-        if (data.success) {
-          setResults(data.data);
-          // setHasMore(data.hasMore);
-          setPage(1);
-        };
-      } catch (error) {
-        console.error('Search error:', error);
-      } finally {
-        setIsLoading(false);
+      const data = await fetchResults(0);
+      
+      if (data) {
+        setResults(data.data);
+        setHasMore(data.hasMore);
+        setPage(1);
       }
+      
+      setIsLoading(false);
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedTags]);
+  }, [fetchResults]);
 
-  // Load more items
   const loadMoreItems = useCallback(async () => {
     if (!hasMore || isLoading) return;
 
     setIsLoading(true);
-    try {
-      const response = await fetch(`/api/meme/filter?creator=${creatorFilter}&tags=${selectedTags.join(',')}&description=${searchTerm}&skip=${page * ITEMS_PER_PAGE}&limit=${ITEMS_PER_PAGE}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setResults(prev => [...prev, ...data.data]);
-        setHasMore(data.hasMore);
-        setPage(prev => prev + 1);
-      };
-    } catch (error) {
-      console.error('Loading error:', error);
-    } finally {
-      setIsLoading(false);
+    
+    const data = await fetchResults(page * ITEMS_PER_PAGE);
+    
+    if (data) {
+      setResults(prev => [...prev, ...data.data]);
+      setHasMore(data.hasMore);
+      setPage(prev => prev + 1);
     }
-  }, [page, hasMore, isLoading, searchTerm, selectedTags]);
+    
+    setIsLoading(false);
+  }, [fetchResults, page, hasMore, isLoading]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -284,8 +301,30 @@ export default function Marketplace() {
                 />
               </div>
               <BottomBar bgColor='#D9DADB'>
-                <MainButton text="Buy and return chat" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyAndReturnClick(selectedMeme)}/>
-                <SecondaryButton text="Buy" color='#D0D0D0' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
+                <MainButton
+                  text={user.balance < selectedMeme.mint_price ? 'Insufficient balance' : 'Buy and return chat'}
+                  color='#e29cff' 
+                  textColor='#510e2a'
+                  onClick={() => {
+                    if (user?.balance < selectedMeme.mint_price)
+                      return;
+
+                    handleBuyAndReturnClick(selectedMeme);
+                  }} 
+                  disabled={user?.balance < selectedMeme.mint_price}
+                />
+                <SecondaryButton 
+                  text={user?.balance < selectedMeme.mint_price ? 'Cancel' : 'Buy'}
+                  color='#D0D0D0' 
+                  textColor='#510e2a' 
+                  onClick={() => {
+                    if (user?.balance < selectedMeme.mint_price) 
+                      setSelectedMeme(null);
+                    else
+                      handleBuyClick(selectedMeme);
+                  }} 
+                  disabled={user?.balance < selectedMeme.mint_price}
+                />
               </BottomBar>
             </div>
           </div>

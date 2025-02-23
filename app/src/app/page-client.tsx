@@ -30,7 +30,7 @@ export default function Home({ user_id }: { user_id: string }) {
       const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
       const chopinData = await chopinResponse.json();
 
-      document.cookie = `dev-address=${chopinData.address}`;
+      document.cookie = `dev-address=${chopinData.address}; path=/`;
 
       setWalletAddress(chopinData.address);
 
@@ -38,6 +38,10 @@ export default function Home({ user_id }: { user_id: string }) {
         WebApp.CloudStorage.setItem('dev-address', chopinData.address);
 
       const createResponse = await fetch(`/api/user/create`, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         method: 'POST',
         body: JSON.stringify({
           chopin_public_key: chopinData.address,
@@ -88,7 +92,7 @@ export default function Home({ user_id }: { user_id: string }) {
         </nav>
       </header>
       <main className={styles.main}>
-        {activeTab === 'marketplace' && <Marketplace />}
+        {activeTab === 'marketplace' && <Marketplace user={user} />}
         {activeTab === 'memecraft' && <Memecraft />}
         {activeTab === 'library' && <Library address={walletAddress} />}
       </main>

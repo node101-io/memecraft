@@ -293,7 +293,6 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes 
 };
 
 UserSchema.statics.purchaseMemeById = function (data, callback) {
-  console.log('purchaseMemeById', data);
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
