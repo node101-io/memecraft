@@ -12,11 +12,11 @@ export async function GET(req) {
   await connectDB();
 
   return Response.json(await new Promise((resolve, reject) => {
-    User.findUserByPublicKey(publicKey, true, (err, user) => {
+    User.findRecentlyAddedMemesByPublicKey(publicKey, (err, memes) => {
       if (err)
         resolve({ success: false, error: err });
 
-      resolve({ success: true, data: user });
+      resolve({ success: true, data: memes });
     });
   }));
 };

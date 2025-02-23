@@ -11,6 +11,7 @@ const MAX_MEMES_ARRAY_LENGTH = 1e6;
 
 const DUPLICATED_UNIQUE_FIELD_ERROR_CODE = 11000;
 
+const DEFAULT_RECENTLY_ADDED_MEMES_COUNT = 6;
 const COMISSION_RATE = 0.05;
 const ROOT_PUBLIC_KEY = "0xed3b7C457c767f26F2Bab253031CFeCaf50D0f03";
 
@@ -47,23 +48,24 @@ const UserSchema = new mongoose.Schema({
         },
         last_used_at: {
           type: Number,
-          required: true
+          default: 0
         }
       }
     ],
-    default: []
+    default: [],
+    _id: false
   }
 });
 
 UserSchema.statics.createUser = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
-  
+
   if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
     return callback('bad_request');
 
   User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
-    if (err)
+    if (err && err !== 'user_not_found')
       return callback(err);
 
     if (user)
@@ -71,7 +73,7 @@ UserSchema.statics.createUser = function (data, callback) {
 
     if (!data.telegram_id || typeof data.telegram_id != 'string')
       return callback('bad_request');
-  
+
     User.create({
       telegram_id: data.telegram_id,
       chopin_public_key: data.chopin_public_key,
@@ -127,7 +129,7 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
     return callback('bad_request');
 
   User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
-    if (err) 
+    if (err)
       return callback('database_error');
 
     if (!user)
@@ -139,28 +141,31 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
     if (!data.memeData || typeof data.memeData !== 'object')
       return callback('bad_request');
 
-    if (!data.memeData.description || typeof data.memeData.description !== 'string')
+    if (!data.memeData.content_url || typeof data.memeData.content_url !== 'string')
       return callback('bad_request');
 
-    if (!data.memeData.content_url || typeof data.memeData.content_url !== 'string')
+    if (!data.memeData.description || typeof data.memeData.description !== 'string')
       return callback('bad_request');
 
     if (!data.memeData.mint_price || typeof data.memeData.mint_price !== 'number')
       return callback('bad_request');
 
+    if (!data.memeData.tags || !Array.isArray(data.memeData.tags) || data.memeData.tags.length === 0)
+      return callback('bad_request');
+
     Meme.create({
       creator: user._id,
-      description: data.memeData.description,
       content_url: data.memeData.content_url,
-      mint_price: data.memeData.mint_price
+      description: data.memeData.description,
+      mint_price: data.memeData.mint_price,
+      tags: data.memeData.tags
     })
       .then(newMeme => {
         if (!newMeme) return callback('database_error');
 
         User.findByIdAndUpdate(user._id, { $push: {
           minted_memes: {
-            meme_id: newMeme._id,
-            last_used_at: data.dateNow
+            meme_id: newMeme._id
           }
         }}, { new: true })
           .then(() => {
@@ -188,12 +193,12 @@ UserSchema.statics.findUserById = function (id, callback) {
 
   User.findById(id)
     .then(user => {
-      if (!user) return callback('document_not_found');
+      if (!user)
+        return callback('document_not_found');
+
       return callback(null, user);
     })
-    .catch(err => {
-      if (err) return callback('database_error');
-    });
+    .catch(_ => callback('database_error'));
 };
 
 UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
@@ -204,7 +209,7 @@ UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
     timeout: dateNow
   }}, { new: true })
     .then(user => {
-      if (!user) return callback('document_not_found');
+      if (!user) return callback('user_not_found');
 
       return callback(null, user);
     })
@@ -213,55 +218,26 @@ UserSchema.statics.timeOutUserById = function (id, dateNow, callback) {
     });
 };
 
-// The following function is a basis for lots of POST requests.
-UserSchema.statics.updateUserById = function (id, data, callback) {
-  const User = this;
-
+UserSchema.statics.checkIfUserIsTimedOut = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
-  const updateData = {};
-
-  if (data.change_in_balance && typeof data.change_in_balance === 'number' && data.change_in_balance <= MAX_BALANCE_VALUE)
-    updateData.$inc = { balance: data.change_in_balance };
-
-  if (data.timeout && !isNaN(Date.parse(data.timeout)))
-    updateData.$set = { timeout: data.timeout };
-
-  if (data.minted_memes && Array.isArray(data.minted_memes) && data.minted_memes.length <= MAX_MEMES_ARRAY_LENGTH) {
-    const validMemes = data.minted_memes.filter(meme => validator.isMongoId(meme.id));
-
-    if (validMemes.length !== data.minted_memes.length)
-      return callback('bad_request');
-
-    updateData.$push = {
-      minted_memes: {
-        $each: validMemes.map(meme => ({
-          id: meme.id,
-          last_used_date: meme.last_used_date
-        }))
-      }
-    };
-  };
-
-  if (Object.keys(updateData).length === 0)
+  if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
     return callback('bad_request');
 
-  User.findUserById(id, (err, user) => {
+  if (!data.dateNow || typeof data.dateNow !== 'number')
+    return callback('bad_request');
+
+  User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
     if (err)
       return callback(err);
 
     if (!user)
-      return callback('document_not_found');
+      return callback('user_not_found');
 
-    User.findByIdAndUpdate(user._id, updateData, { new: true })
-      .then(updatedUser => {
-        if (!updatedUser)
-          return callback('database_error');
+    const isUserTimedOut = data.dateNow - user.timeout < TIME_OUT_DURATION;
 
-        return callback(null, updatedUser);
-      })
-      .catch(_ => callback('database_error'));
+    return callback(null, isUserTimedOut);
   });
 };
 
@@ -283,39 +259,39 @@ UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callbac
       if (err) return callback('database_error');
     });
 };
-// UserSchema.statics.findUserByIdAndDelete = function (id, callback) {
-//   if (!id || !validator.isMongoId(id.toString()))
-//     return callback('bad_request');
 
-//   User.findOneAndDelete({ _id: id })
-//   .catch(err => {
-//     if (err) return callback('database_error');
-//   })
-//   .then(user => {
-//     if (!user) return callback('document_not_found');
-
-//     return callback(null);
-//   });
-// };
 UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes = false, callback) {
   if (!publicKey || typeof publicKey !== 'string')
     return callback('bad_request');
 
-  const query = User.findOne({ chopin_public_key: publicKey });
-  
+  let query = User.findOne({ chopin_public_key: publicKey });
+
   if (with_minted_memes)
-    query.populate('minted_memes');
+    query.populate({
+      path: 'minted_memes.meme_id',
+      model: 'Meme',
+      populate: {
+        path: 'creator',
+        model: 'User',
+        select: '-minted_memes'
+      }
+    }).lean();
 
   query
     .then(user => {
       if (!user) return callback('user_not_found');
 
+      if (with_minted_memes && user.minted_memes)
+        user.minted_memes = user.minted_memes.map(memeObj => ({
+          meme: memeObj.meme_id,
+          last_used_at: memeObj.last_used_at
+        }));
+
       return callback(null, user);
     })
-    .catch(err => {
-      if (err) return callback(err);
-    });
+    .catch(err => callback(err));
 };
+
 UserSchema.statics.purchaseMemeById = function (data, callback) {
   if (!data.buyerId || !validator.isMongoId(data.buyerId.toString()))
     return callback('bad_request');
@@ -394,8 +370,25 @@ UserSchema.statics.findLastUsedMemesByUserId = function (userId, callback) {
 
   })
 };
-UserSchema.statics.findRecentlyAddedMemesByUserId = function (userId, callback) {
-  // TODO: minted_memes zaten sıralı, sadece listenin son 6 elemanını al
+
+UserSchema.statics.findRecentlyAddedMemesByPublicKey = function (publicKey, callback) {
+  if (!publicKey || typeof publicKey !== 'string')
+    return callback('bad_request');
+
+  User.findUserByPublicKey(publicKey, true, (err, user) => {
+    if (err)
+      return callback(err);
+
+    if (!user)
+      return callback('user_not_found');
+
+    if (!user.minted_memes || user.minted_memes.length === 0)
+      return callback(null, []);
+
+    const recentlyAddedMemes = user.minted_memes.slice(-DEFAULT_RECENTLY_ADDED_MEMES_COUNT).map(memeObj => memeObj);
+
+    return callback(null, recentlyAddedMemes);
+  });
 };
 
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);

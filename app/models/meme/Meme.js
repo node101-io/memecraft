@@ -19,7 +19,7 @@ const MemeSchema = new mongoose.Schema({
     required: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
-  tag: {
+  tags: {
     type: Array,
     default: [],
     validate: {
@@ -51,7 +51,7 @@ MemeSchema.statics.findMemeById = function (id, callback){
   Meme.findById(id,)
     .then(meme => {
       if (!meme) return callback('document_not_found');
-  
+
       return callback(null, meme);
     })
     .catch(err => {
