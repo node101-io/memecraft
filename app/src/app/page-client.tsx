@@ -20,7 +20,7 @@ export default function Home() {
     chopin_public_key: '',
   });
 
-  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
+  const [walletAddress, setWalletAddress] = useState<string>('');
 
   useEffect(() => {
     console.log('WebApp.initDataUnsafe', WebApp);
