@@ -23,7 +23,6 @@ export async function GET(req) {
           return;
         }
 
-        // Calculate if there might be more items
         const hasMore = memes.length === filters.limit;
         
         resolve({ 

@@ -4,78 +4,45 @@ import { useEffect, useState } from 'react';
 import styles from './library.module.css';
 import Image from 'next/image';
 
+import { PopulatedUser, Meme } from '../page-client';
+
 const FIXED_ITEMS_COUNT = 6;
 
-export default function Library({ address }: { address: string; }) {
+export default function Library({ user }: { user: PopulatedUser; }) {
+  console.log('user', user);
   const [searchTerm, setSearchTerm] = useState('');
-  const [user, setUser] = useState<{
-    chopin_public_key: string;
-    telegram_id: string;
-    balance: number;
-    minted_memes: {
-      meme: {
-        id: string;
-        description: string;
-        tags: string[];
-        content_url: string;
-        mint_price: number;
-      };
-      last_used_at: number;
-    }[];
-  }>({
-    minted_memes: [],
-    chopin_public_key: '',
-    telegram_id: '',
-    balance: 0,
-  });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!address) return;
+  const allMemes = (user.minted_memes?.map(item => item.meme) || []).filter(Boolean);
 
-      const response = await fetch(`/api/user/show?chopin_public_key=${address}`);
-      const userData = await response.json();
+  const recentMemes = [...allMemes].slice(-FIXED_ITEMS_COUNT);
 
-      console.log('userData', userData);
-      if (userData.success)
-        setUser(userData.data);
-    };
-
-    fetchUser();
-  }, [address]);
-
-  const allMemes = user.minted_memes.map(item => item.meme);
-
-  const recentMemes = allMemes.slice(-FIXED_ITEMS_COUNT);
-
-  const lastUsedMemes = [...user.minted_memes]
-    .sort((a, b) => b.last_used_at - a.last_used_at)
+  const lastUsedMemes = [...(user.minted_memes || [])]
+    .sort((a, b) => (b.last_used_at || 0) - (a.last_used_at || 0))
     .slice(0, FIXED_ITEMS_COUNT)
-    .map(item => item.meme);
+    .map(item => item.meme)
+    .filter(Boolean);
 
   const filteredMemes = searchTerm.trim()
-    ? allMemes.filter(meme => meme.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    ? allMemes.filter(meme => 
+        meme?.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     : allMemes;
 
-  const renderMemeGrid = (memes: {
-    id: string;
-    description: string;
-    tags: string[];
-    content_url: string;
-    mint_price: number;
-  }[], section: string) => (
+  const renderMemeGrid = (memes: Meme[], section: string) => (
     <div className={styles.memesGrid}>
-      {memes.length > 0 ? memes.map((meme) => (
-        <div key={`${section}-${meme.id}`} className={styles.memeItem}>
-          <Image 
-            src={meme.content_url} 
-            alt={meme.description} 
-            width={96} 
-            height={96}
-            className={styles.memeImage}
-          />
-        </div>
-      )) : (
+      {memes.length > 0 ? memes.map((meme, index) => (
+        meme && (
+          <div key={`${section}-${meme._id}-${index}`} className={styles.memeItem}>
+            <Image 
+              src={meme.content_url || ''}
+              alt={meme.description || ''} 
+              width={96} 
+              height={96}
+              className={styles.memeImage}
+            />
+          </div>
+        )
+      )).filter(Boolean) : (
         <div className={styles.noResults}>No results found</div>
       )}
     </div>
@@ -104,23 +71,7 @@ export default function Library({ address }: { address: string; }) {
       {renderMemeGrid(lastUsedMemes, 'used')}
 
       <h3 className={styles.sectionTitle}>ALL</h3>
-      <div className={styles.memesGrid}>
-        {filteredMemes.length > 0 ? (
-          filteredMemes.map((meme) => (
-            <div key={`all-${meme.id}`} className={styles.memeItem}>
-              <Image 
-                src={meme.content_url} 
-                alt={meme.description} 
-                width={96} 
-                height={96}
-                className={styles.memeImage}
-              />
-            </div>
-          ))
-        ) : (
-          <div className={styles.noResults}>No results found</div>
-        )}
-      </div>
+      {renderMemeGrid(filteredMemes, 'all')}
     </>
   );
 }

@@ -57,14 +57,14 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-UserSchema.statics.createUser = function (data, callback) {
+UserSchema.statics.createUserIfNotExists = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
   if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
     return callback('bad_request');
 
-  User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
+  User.findUserByPublicKey(data.chopin_public_key, true, (err, user) => {
     if (err && err !== 'user_not_found')
       return callback(err);
 
@@ -304,25 +304,24 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
 
   User.findUserByPublicKey(data.buyerPublicKey, false, (err, buyer) => {
     if (err)
-      return callback('database_error');
+      return callback(err);
 
     if (!buyer)
       return callback('buyer_not_found');
 
     Meme.findMemeById(data.memeId, (err, meme) => {
       if (err)
-        return callback('database_error');
+        return callback(err);
 
       if (!meme)
         return callback('meme_not_found');
-
 
       if (buyer.balance < meme.mint_price)
         return callback('insufficient_balance');
 
       User.findUserById(meme.creator, (err, creator) => {
-        if (err)
-          return callback('database_error');
+        if (err) // here document not found
+          return callback(err);
 
         if (!creator)
           return callback('creator_not_found');

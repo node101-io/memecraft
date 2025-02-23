@@ -9,7 +9,6 @@ export default function TelegramTest() {
 
   useEffect(() => {
     const loginChopin = async () => {
-      // const devAddress = document.cookie.split(';').find(c => c.trim().startsWith('dev-address='))?.split('=')[1];
       WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
         if (error)
           return console.error(error);

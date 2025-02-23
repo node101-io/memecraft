@@ -17,6 +17,7 @@ export async function POST(req) {
 
   return Response.json(await new Promise((resolve) => {
     User.purchaseMemeById(data, (err) => {
+      console.log('here4', err);
       if (err)
         resolve({ success: false, error: err });
 

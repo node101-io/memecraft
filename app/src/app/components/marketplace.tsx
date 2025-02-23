@@ -12,26 +12,19 @@ import {
 
 import styles from './marketplace.module.css';
 
+import { Meme } from '../page-client';
+
 const POPULAR_TEMPLATES = [
-  { id: 'pepe', src: '/templates/template-pepe.png', alt: 'ilginç' },
-  { id: 'cat', src: '/templates/template-cat.png', alt: 'ilginç' },
-  { id: 'doge', src: '/templates/template-doge.png', alt: 'ilginç' },
-  { id: 'rage', src: '/templates/template-rage.png', alt: 'Rage Comic' },
-  { id: 'troll', src: '/templates/template-troll.png', alt: 'Troll Face' },
-  { id: 'elon', src: '/templates/template-elon.png', alt: 'Elon' },
-  { id: 'frog', src: '/templates/template-yao.png', alt: 'Yao Ming' },
+  { id: 'wifi', src: '/templates/template-pepe.png', alt: 'wifi' },
+  { id: 'elon', src: '/templates/template-cat.png', alt: 'elon' },
+  { id: 'crypto', src: '/templates/template-doge.png', alt: 'crypto' },
+  { id: 'trading', src: '/templates/template-rage.png', alt: 'trading' },
+  { id: 'ethereum', src: '/templates/template-troll.png', alt: 'ethereum' },
+  { id: 'pizza', src: '/templates/template-elon.png', alt: 'pizza' },
+  { id: 'frog', src: '/templates/template-yao.png', alt: 'frog' },
 ];
 
 const ITEMS_PER_PAGE = 15;
-
-interface Meme {
-  _id: string;
-  content_url: string;
-  description: string;
-  mint_price: number;
-  tags: string[];
-  creator: string;
-}
 
 interface SearchResponse {
   success: boolean;
@@ -64,7 +57,6 @@ export default function Marketplace({ user }: { user: {
 
   const handleMemeClick = useCallback(async (meme: Meme) => {
     setSelectedMeme(meme);
-    await handleBuyClick(meme); // TODO: remove this
   }, []);
 
   const clearCreatorFilter = useCallback(() => {
@@ -73,18 +65,23 @@ export default function Marketplace({ user }: { user: {
   }, []);
 
   const handleBuyClick = useCallback(async (meme: Meme) => {
+    console.log(localStorage.getItem('chopin-jwt-token'));
+
     const response = await fetch('/api/meme/mint', {
       method: 'POST',
       body: JSON.stringify({
         memeId: meme._id
-      })
+      }),
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('chopin-jwt-token')}`
+      }
     });
     const data = await response.json();
 
     if (!data.success) {
       console.error('Error buying meme:', data.error);
       return;
-    }
+    };
 
     setSelectedMeme(null);
   }, []);

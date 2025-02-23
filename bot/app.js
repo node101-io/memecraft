@@ -121,7 +121,7 @@ bot.on('inline_query', async (ctx) => {
         text: 'Get more',
         web_app: {
           url: `https://memecraft.node101.io?user_id=${userId}`
-        },
+        }
       },
       cache_time: 0
     });

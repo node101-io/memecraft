@@ -11,16 +11,43 @@ import Marketplace from './components/marketplace';
 import Memecraft from './components/craft';
 import Library from './components/library';
 
+export interface PopulatedUser {
+  chopin_public_key: string;
+  telegram_id: string;
+  balance: number;
+  minted_memes: {
+    meme: Meme;
+    last_used_at: number;
+  }[];
+};
+
+export interface User {
+  chopin_public_key: string;
+  telegram_id: string;
+  balance: number;
+  minted_memes: {
+    meme_id: string;
+    last_used_at: number;
+  }[];
+};
+
+export interface Meme {
+  _id: string;
+  description: string;
+  tags: string[];
+  content_url: string;
+  mint_price: number;
+  creator: string;
+}
+
 export default function Home({ user_id }: { user_id: string }) {
   const [activeTab, setActiveTab] = useState('library');
-  const [user, setUser] = useState({
-    balance: 0,
+  const [user, setUser] = useState<PopulatedUser>({
     minted_memes: [],
-    telegram_id: '',
     chopin_public_key: '',
+    telegram_id: '',
+    balance: 0,
   });
-
-  const [walletAddress, setWalletAddress] = useState<string>('');
 
   useEffect(() => {
     WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
@@ -30,31 +57,32 @@ export default function Home({ user_id }: { user_id: string }) {
       const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
       const chopinData = await chopinResponse.json();
 
-      document.cookie = `dev-address=${chopinData.address}; path=/`;
+      if (!chopinData.success)
+        return console.error(chopinData);
 
-      setWalletAddress(chopinData.address);
+      localStorage.setItem('chopin-jwt-token', chopinData.token);
+      localStorage.setItem('dev-address', chopinData.address);
 
       if (chopinData.address !== devAddress)
-        WebApp.CloudStorage.setItem('dev-address', chopinData.address);
+        WebApp.CloudStorage.setItem('dev-address', chopinData.address, () => console.log('dev-address set'));
 
       const createResponse = await fetch(`/api/user/create`, {
-        credentials: "include",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('chopin-jwt-token')}`
         },
         method: 'POST',
         body: JSON.stringify({
-          chopin_public_key: chopinData.address,
           telegram_id: user_id,
         })
       });
 
-      const createUserData = await createResponse.json();
+      const userData = await createResponse.json();
+      console.log('User data from API:', userData);
 
-      if (createUserData.success)
-        setUser(createUserData.data);
+      if (!userData.success)
+        return console.error(userData);
 
-      console.log('createUserData', createUserData);
+      setUser(userData.data);
     });
   }, []);
 
@@ -94,7 +122,7 @@ export default function Home({ user_id }: { user_id: string }) {
       <main className={styles.main}>
         {activeTab === 'marketplace' && <Marketplace user={user} />}
         {activeTab === 'memecraft' && <Memecraft />}
-        {activeTab === 'library' && <Library address={walletAddress} />}
+        {activeTab === 'library' && <Library user={user} />}
       </main>
     </>
   );
