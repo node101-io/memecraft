@@ -55,6 +55,14 @@ export default function Marketplace() {
     setSearchTerm('');
   };
 
+  const handleBuyAndSendClick = (meme: Meme) => {
+    // TODO: buy meme apisini çağır meme id ile
+    WebApp.showPopup({
+      title: 'Buy Meme',
+      message: 'Are you sure you want to buy this meme?',
+    });
+  };
+
   const handleBuyClick = (meme: Meme) => {
     // TODO: buy meme apisini çağır meme id ile
     WebApp.showPopup({
@@ -68,6 +76,7 @@ export default function Marketplace() {
   };
 
   useEffect(() => {
+    console.log(WebApp.initDataUnsafe);
     const debounceTimer = setTimeout(async () => {
       setResults([]);
       setPage(0);
@@ -255,7 +264,7 @@ export default function Marketplace() {
                 />
               </div>
               <BottomBar bgColor='#D0D0D0'>
-                <MainButton text="Buy and Send" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
+                <MainButton text="Buy and Send" color='#e29cff' textColor='#510e2a' onClick={() => handleBuyAndSendClick(selectedMeme)}/>
                 <SecondaryButton text="Buy" color='#D0D0D0' textColor='#510e2a' onClick={() => handleBuyClick(selectedMeme)}/>
               </BottomBar>
             </div>
