@@ -40,3 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .chopin
+
+# env files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local

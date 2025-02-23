@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styles from './marketplace.module.css';
 import Image from 'next/image';
-import { MemeApi, type Meme } from '../services/memeApi';
+import { ImgflipAIApi, type Meme } from '../services/imgflip';
 
 const POPULAR_TEMPLATES = [
   { id: 'pepe', src: '/templates/template-pepe.png', alt: 'Pepe' },
@@ -23,10 +23,15 @@ export default function Marketplace() {
   const [isLoading, setIsLoading] = useState(true);
   const [results, setResults] = useState<Meme[]>([]);
   const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null);
-  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [creatorFilter, setCreatorFilter] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Initialize the ImgflipAIApi
+  const client = useMemo(() => new ImgflipAIApi({
+    username: process.env.IMGFLIP_USERNAME || '',
+    password: process.env.IMGFLIP_PASSWORD || '',
+  }), []);
 
   const handleTemplateClick = (tag: string) => {
     setSelectedTags(prev => {
@@ -46,44 +51,48 @@ export default function Marketplace() {
     setSearchTerm('');
   };
 
+  // Generate memes based on search term and tags
   useEffect(() => {
     const debounceTimer = setTimeout(async () => {
       setResults([]);
-      setPage(0);
       setHasMore(true);
       
       try {
         setIsLoading(true);
-        const response = await MemeApi.searchMemes(searchTerm, 0, ITEMS_PER_PAGE, selectedTags);
-        setResults(response.memes);
-        setHasMore(response.hasMore);
-        setPage(1);
+        const searchPromises = Array(3).fill(null).map(() => 
+          client.generateMeme(searchTerm || selectedTags.join(' '))
+        );
+        const newMemes = await Promise.all(searchPromises);
+        setResults(newMemes);
+        setHasMore(false);
       } catch (error) {
-        console.error('Search error:', error);
+        console.error('Generation error:', error);
       } finally {
         setIsLoading(false);
       }
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedTags]);
+  }, [searchTerm, selectedTags, client]);
 
-  // Load more items
+  // Load more items - generates new memes on demand
   const loadMoreItems = useCallback(async () => {
     if (!hasMore || isLoading) return;
 
     setIsLoading(true);
     try {
-      const response = await MemeApi.searchMemes(searchTerm, page, ITEMS_PER_PAGE, selectedTags);
-      setResults(prev => [...prev, ...response.memes]);
-      setHasMore(response.hasMore);
-      setPage(prev => prev + 1);
+      const newMemesPromises = Array(3).fill(null).map(() => 
+        client.generateMeme(searchTerm || selectedTags.join(' '))
+      );
+      const newMemes = await Promise.all(newMemesPromises);
+      setResults(prev => [...prev, ...newMemes]);
+      setHasMore(true);
     } catch (error) {
       console.error('Loading error:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, searchTerm, selectedTags]);
+  }, [isLoading, searchTerm, selectedTags, hasMore, client]);
 
   // Infinite scroll observer
   useEffect(() => {
