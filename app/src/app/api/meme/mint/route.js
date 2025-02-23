@@ -1,4 +1,4 @@
-import { User } from '../../../../../../app/models/user/User';
+import { User } from '../../../../../models/user/User';
 
 import connectDB from '../../../../../lib/db';
 
