@@ -34,7 +34,7 @@ export default function Library({ user }: LibraryProps) {
 
   const renderMemeGrid = (memes: Meme[], section: string) => (
     <div className={styles.memesGrid}>
-      {memes.map((meme) => (
+      {memes.length > 0 ? memes.map((meme) => (
         <div key={`${section}-${meme.id}`} className={styles.memeItem}>
           <Image 
             src={meme.imageUrl} 
@@ -44,7 +44,9 @@ export default function Library({ user }: LibraryProps) {
             className={styles.memeImage}
           />
         </div>
-      ))}
+      )) : (
+        <div className={styles.noResults}>No results found</div>
+      )}
     </div>
   );
 

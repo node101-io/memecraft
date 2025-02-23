@@ -23,6 +23,8 @@ export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
 
   useEffect(() => {
+    console.log('WebApp.initDataUnsafe', WebApp);
+
     WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
       if (error)
         return console.error(error);
@@ -34,6 +36,17 @@ export default function Home() {
 
       if (chopinData.address !== devAddress)
         WebApp.CloudStorage.setItem('dev-address', chopinData.address);
+
+      const createResponse = await fetch(`/api/user/create`, {
+        method: 'POST',
+        body: JSON.stringify({
+          chopin_public_key: chopinData.address,
+          telegram_id: WebApp?.initDataUnsafe?.user?.id,
+        })
+      });
+
+      const createUserData = await createResponse.json();
+      setUser(createUserData.data);
 
       const response = await fetch(`/api/user/show?chopin_public_key=${chopinData.address}`);
       const userData = await response.json();
