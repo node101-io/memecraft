@@ -25,30 +25,30 @@ export default function Home() {
   useEffect(() => {
     console.log('WebApp.initDataUnsafe', WebApp);
 
-    WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
-      if (error)
-        return console.error(error);
+    // WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
+    //   if (error)
+    //     return console.error(error);
 
-      const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
-      const chopinData = await chopinResponse.json();
+    //   const chopinResponse = await fetch(`/_chopin/login${devAddress ? `?as=${devAddress}` : ''}`);
+    //   const chopinData = await chopinResponse.json();
 
-      setWalletAddress(chopinData.address);
+    //   setWalletAddress(chopinData.address);
 
-      if (chopinData.address !== devAddress)
-        WebApp.CloudStorage.setItem('dev-address', chopinData.address);
+    //   if (chopinData.address !== devAddress)
+    //     WebApp.CloudStorage.setItem('dev-address', chopinData.address);
 
-      const createResponse = await fetch(`/api/user/create`, {
-        method: 'POST',
-        body: JSON.stringify({
-          chopin_public_key: chopinData.address,
-          telegram_id: WebApp?.initDataUnsafe?.user?.id,
-        })
-      });
+    //   const createResponse = await fetch(`/api/user/create`, {
+    //     method: 'POST',
+    //     body: JSON.stringify({
+    //       chopin_public_key: chopinData.address,
+    //       telegram_id: WebApp?.initDataUnsafe?.user?.id,
+    //     })
+    //   });
 
-      const createUserData = await createResponse.json();
-      setUser(createUserData.data);
-      console.log('createUserData', createUserData);
-    });
+    //   const createUserData = await createResponse.json();
+    //   setUser(createUserData.data);
+    //   console.log('createUserData', createUserData);
+    // });
   }, []);
 
   return (

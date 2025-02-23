@@ -31,6 +31,8 @@ export default function Library({ address }: { address: string; }) {
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!address) return;
+
       const response = await fetch(`/api/user/show?chopin_public_key=${address}`);
       const userData = await response.json();
 
@@ -38,7 +40,7 @@ export default function Library({ address }: { address: string; }) {
     };
 
     fetchUser();
-  }, []);
+  }, [address]);
 
   const allMemes = user.minted_memes.map(item => item.meme);
 
