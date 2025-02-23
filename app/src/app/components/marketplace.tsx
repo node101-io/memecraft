@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styles from './marketplace.module.css';
 import Image from 'next/image';
-import { ImgflipAIApi, type Meme } from '../services/imgflip';
+import { ImgflipClient, type Meme } from '../services/imgflipApi';
 
 const POPULAR_TEMPLATES = [
   { id: 'pepe', src: '/templates/template-pepe.png', alt: 'Pepe' },
@@ -27,8 +27,8 @@ export default function Marketplace() {
   const [creatorFilter, setCreatorFilter] = useState<string | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Initialize the ImgflipAIApi
-  const client = useMemo(() => new ImgflipAIApi({
+  // Initialize the ImgflipClient
+  const client = useMemo(() => new ImgflipClient({
     username: process.env.IMGFLIP_USERNAME || '',
     password: process.env.IMGFLIP_PASSWORD || '',
   }), []);
