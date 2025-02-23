@@ -62,7 +62,7 @@ UserSchema.statics.createUser = function (data, callback) {
   if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
     return callback('bad_request');
 
-  User.findUserByPublicKey(data.chopin_public_key, (err, user) => {
+  User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
     if (err)
       return callback(err);
 
@@ -126,7 +126,7 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
   if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
     return callback('bad_request');
 
-  User.findUserByPublicKey(data.chopin_public_key, (err, user) => {
+  User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
     if (err) 
       return callback('database_error');
 
@@ -297,11 +297,16 @@ UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callbac
 //     return callback(null);
 //   });
 // };
-UserSchema.statics.findUserByPublicKey = function (publicKey, callback) {
-  if (!publicKey || typeof publicKey !== 'string') // || !validator.isUUID(publicKey))
+UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes = false, callback) {
+  if (!publicKey || typeof publicKey !== 'string')
     return callback('bad_request');
 
-  User.findOne({ chopin_public_key: publicKey })
+  const query = User.findOne({ chopin_public_key: publicKey });
+  
+  if (with_minted_memes)
+    query.populate('minted_memes');
+
+  query
     .then(user => {
       if (!user) return callback('user_not_found');
 
@@ -355,7 +360,7 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
             { $inc: { balance: meme.mint_price - COMISSION } }
           )
           .then(() => {
-            User.findUserByPublicKey(ROOT_PUBLIC_KEY, (err, memeGenerator) => {
+            User.findUserByPublicKey(ROOT_PUBLIC_KEY, false, (err, memeGenerator) => {
               if (err)
                 return callback(err);
               if (!memeGenerator)

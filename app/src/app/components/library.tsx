@@ -1,122 +1,41 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import styles from './library.module.css';
 import Image from 'next/image';
-import { MemeApi, type Meme } from '../services/memeApi';
+import { type Meme } from '../services/memeApi';
 
-const ITEMS_PER_PAGE = 15;
 const FIXED_ITEMS_COUNT = 6;
 
-// TODO: all memes'teki lazy load iptal, search te frontend'de yapılacak
+interface LibraryProps {
+  user: {
+    minted_memes: {
+      meme_id: Meme;
+      last_used_at: number;
+    }[];
+  };
+}
 
-export default function Library() {
+export default function Library({ user }: LibraryProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [recentMemes, setRecentMemes] = useState<Meme[]>([]);
-  const [usedMemes, setUsedMemes] = useState<Meme[]>([]);
-  const [allMemes, setAllMemes] = useState<Meme[]>([]);
-  const [allPage, setAllPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Load fixed sections (recent and used)
-  useEffect(() => {
-    const loadFixedSections = async () => {
-      try {
-        const [recentResponse, usedResponse] = await Promise.all([
-          MemeApi.getRecentMemes(0, FIXED_ITEMS_COUNT),
-          MemeApi.getUsedMemes(0, FIXED_ITEMS_COUNT)
-        ]);
+  const allMemes = user.minted_memes.map(item => item.meme_id);
 
-        setRecentMemes(recentResponse.memes);
-        setUsedMemes(usedResponse.memes);
-      } catch (error) {
-        console.error('Loading error:', error);
-      }
-    };
+  const recentMemes = allMemes.slice(-FIXED_ITEMS_COUNT);
 
-    loadFixedSections();
-  }, []);
+  const lastUsedMemes = [...user.minted_memes]
+    .sort((a, b) => b.last_used_at - a.last_used_at)
+    .slice(0, FIXED_ITEMS_COUNT)
+    .map(item => item.meme_id);
 
-  // Search effect'i güncelleyelim
-  useEffect(() => {
-    const debounceTimer = setTimeout(async () => {
-      // Reset states
-      setAllMemes([]);
-      setAllPage(0);
-      setHasMore(true);
-      
-      // Yeni arama için yükleme başlat
-      try {
-        setIsLoading(true);
-        const response = await MemeApi.getAllMemes(0, ITEMS_PER_PAGE);
-        setAllMemes(response.memes);
-        setHasMore(response.hasMore);
-        setAllPage(1);
-      } catch (error) {
-        console.error('Search error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 500);
+  const filteredMemes = searchTerm.trim()
+    ? allMemes.filter(meme => meme.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    : allMemes;
 
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm]);
-
-  // loadMoreAllMemes fonksiyonunu güncelleyelim
-  const loadMoreAllMemes = useCallback(async () => {
-    if (!hasMore || isLoading) return;
-
-    setIsLoading(true);
-    try {
-      const response = await MemeApi.getAllMemes(allPage, ITEMS_PER_PAGE);
-      
-      // Eğer arama terimi varsa, aramaya göre filtrele
-      const filteredMemes = searchTerm.trim() 
-        ? response.memes.filter(meme => 
-            meme.title.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        : response.memes;
-
-      setAllMemes(prev => [...prev, ...filteredMemes]);
-      setHasMore(response.hasMore && filteredMemes.length > 0);
-      setAllPage(prev => prev + 1);
-    } catch (error) {
-      console.error('Loading error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [allPage, hasMore, isLoading, searchTerm]);
-
-  // Infinite scroll observer'ı aynı kalabilir
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          loadMoreAllMemes();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMoreAllMemes, hasMore, isLoading]);
-
-  const renderSkeletons = (count: number) => (
-    Array(count).fill(null).map((_, index) => (
-      <div key={`skeleton-${index}`} className={`${styles.memeItem} ${styles.skeleton}`} />
-    ))
-  );
-
-  const renderMemeGrid = (memes: Meme[], isFixed: boolean = false) => (
+  const renderMemeGrid = (memes: Meme[], section: string) => (
     <div className={styles.memesGrid}>
-      {memes.length > 0 ? memes.map((meme) => (
-        <div key={meme.id} className={styles.memeItem}>
+      {memes.map((meme) => (
+        <div key={`${section}-${meme.id}`} className={styles.memeItem}>
           <Image 
             src={meme.imageUrl} 
             alt={meme.title} 
@@ -125,7 +44,7 @@ export default function Library() {
             className={styles.memeImage}
           />
         </div>
-      )) : renderSkeletons(isFixed ? FIXED_ITEMS_COUNT : 9)}
+      ))}
     </div>
   );
 
@@ -146,33 +65,26 @@ export default function Library() {
       </div>
 
       <h3 className={styles.sectionTitle}>RECENTLY ADDED</h3>
-      {renderMemeGrid(recentMemes, true)}
+      {renderMemeGrid(recentMemes, 'recent')}
 
       <h3 className={styles.sectionTitle}>LAST USED</h3>
-      {renderMemeGrid(usedMemes, true)}
+      {renderMemeGrid(lastUsedMemes, 'used')}
 
       <h3 className={styles.sectionTitle}>ALL</h3>
       <div className={styles.memesGrid}>
-        {allMemes.map((meme) => (
-          <div key={meme.id} className={styles.memeItem}>
-            <Image 
-              src={meme.imageUrl} 
-              alt={meme.title} 
-              width={96} 
-              height={96}
-              className={styles.memeImage}
-            />
-          </div>
-        ))}
-        <div ref={observerTarget} className={styles.loadingContainer}>
-          {isLoading && hasMore && (
-            <div className={styles.loadingSpinner}></div>
-          )}
-        </div>
-        {!hasMore && allMemes.length > 0 && (
-          <div className={styles.endMessage}>No more items to load</div>
-        )}
-        {!isLoading && allMemes.length === 0 && (
+        {filteredMemes.length > 0 ? (
+          filteredMemes.map((meme) => (
+            <div key={`all-${meme.id}`} className={styles.memeItem}>
+              <Image 
+                src={meme.imageUrl} 
+                alt={meme.title} 
+                width={96} 
+                height={96}
+                className={styles.memeImage}
+              />
+            </div>
+          ))
+        ) : (
           <div className={styles.noResults}>No results found</div>
         )}
       </div>
