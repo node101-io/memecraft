@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import WebApp from '@twa-dev/sdk';
+import {
+  MainButton,
+  SecondaryButton,
+  BottomBar,
+  BackButton
+} from '@twa-dev/sdk/react';
 
 import styles from './marketplace.module.css';
 
@@ -125,6 +131,12 @@ export default function Marketplace() {
 
   return (
     <>
+      <MainButton text="Main Button" />
+      <SecondaryButton text="Secondary Button" />
+      <BottomBar>
+        <SecondaryButton text="Secondary Button" />
+      </BottomBar>
+      <BackButton />
       <div className={styles.searchWrapper}>
         <svg className={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="10" cy="10" r="7"></circle>
