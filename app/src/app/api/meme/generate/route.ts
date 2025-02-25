@@ -1,5 +1,4 @@
 import { ImgflipClient } from '../../../services/imgflipApi';
-import { Oracle } from '@chopinframework/next';
 
 export async function POST(req: Request) {
   try {

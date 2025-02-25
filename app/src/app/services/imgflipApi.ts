@@ -1,5 +1,4 @@
-// Add import for node-fetch if not in browser environment
-import 'isomorphic-fetch';
+import { Oracle } from '@chopinframework/next';
 
 interface ImgflipCredentials {
   username: string;
@@ -57,6 +56,7 @@ export class ImgflipClient {
     });
 
     try {
+      // TODO: change with Oracle.fetch()
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
