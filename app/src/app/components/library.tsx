@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import styles from './library.module.css';
 import Image from 'next/image';
+import WebApp from '@twa-dev/sdk';
 
 import { PopulatedUser, Meme } from '../page-client';
 
@@ -28,11 +29,21 @@ export default function Library({ user }: { user: PopulatedUser; }) {
       )
     : allMemes;
 
+  const handleMemeClick = (memeId: string) => {
+    WebApp.switchInlineQuery(memeId);
+  };
+
   const renderMemeGrid = (memes: Meme[], section: string) => (
     <div className={styles.memesGrid}>
       {memes.length > 0 ? memes.map((meme, index) => (
         meme && (
-          <div key={`${section}-${meme._id}-${index}`} className={styles.memeItem}>
+          <div 
+            key={`${section}-${meme._id}-${index}`} 
+            className={styles.memeItem}
+            onClick={() => handleMemeClick(meme._id)}
+            role="button"
+            tabIndex={0}
+          >
             <Image 
               src={meme.content_url || ''}
               alt={meme.description || ''} 

@@ -292,6 +292,24 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes 
     .catch(err => callback(err));
 };
 
+UserSchema.statics.findUserByTelegramId = function (telegramId, callback) {
+  if (!telegramId || typeof telegramId !== 'string')
+    return callback('bad_request');
+
+  User.findOne({ telegram_id: telegramId })
+    .then(user => {
+      if (!user) return callback('user_not_found');
+      
+      User.findUserByPublicKey(user.chopin_public_key, true, (err, user) => {
+        if (err) 
+          return callback(err);
+
+        return callback(null, user);
+      });
+    })
+    .catch(err => callback(err));
+};
+
 UserSchema.statics.purchaseMemeById = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');

@@ -46,6 +46,12 @@
   overflow: hidden;
   background-color: #D0D0D0;
   position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.memeItem:hover {
+  transform: scale(1.02);
 }
 
 .priceTag {

@@ -41,7 +41,7 @@ export interface Meme {
 }
 
 export default function Home({ user_id }: { user_id: string }) {
-  const [activeTab, setActiveTab] = useState('library');
+  const [activeTab, setActiveTab] = useState('memecraft');
   const [user, setUser] = useState<PopulatedUser>({
     minted_memes: [],
     chopin_public_key: '',
@@ -72,7 +72,7 @@ export default function Home({ user_id }: { user_id: string }) {
         },
         method: 'POST',
         body: JSON.stringify({
-          telegram_id: user_id,
+          telegram_id: user_id || WebApp.initDataUnsafe.user?.id,
         })
       });
 
