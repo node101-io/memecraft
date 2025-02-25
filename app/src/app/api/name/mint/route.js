@@ -7,7 +7,7 @@ export async function POST(req) {
   const body = await req.json();
 
   const data = {
-    buyerPublicKey: body.chopin_public_key,
+    buyerPublicKey: getAddress(),
     name: body.name
   };
 
