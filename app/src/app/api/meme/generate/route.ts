@@ -17,12 +17,13 @@ export async function POST(req: Request) {
     });
 
     try {
-      const { content_url } = await client.generateMeme(prompt, mode === 'template' ? Number(templateId) : undefined);
+      const { content_url, description } = await client.generateMeme(prompt, mode === 'template' ? Number(templateId) : undefined);
 
       return Response.json({
         success: true,
         data: {
-          content_url
+          content_url,
+          description
         }
       });
 

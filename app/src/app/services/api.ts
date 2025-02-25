@@ -82,14 +82,15 @@ export class Client {
     }
   }
 
-  async generateMeme(prompt: string, templateId?: number): Promise<{ content_url: string }> {
+  async generateMeme(prompt: string, templateId?: number): Promise<{ content_url: string, description: string }> {
     const response = await this.generateAIMeme({
       prefix_text: prompt,
       template_id: templateId,
     });
   
     return {
-      content_url: response.data.url
+      content_url: response.data.url,
+      description: response.data.texts.join(' ')
     };
   }
 }

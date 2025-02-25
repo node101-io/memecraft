@@ -125,6 +125,8 @@ UserSchema.statics.findUser = function (data, callback) {
 };
 
 UserSchema.statics.createMemeForUser = function (data, callback) {
+  console.log(data);
+
   if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
     return callback('bad_request');
 

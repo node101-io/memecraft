@@ -5,6 +5,7 @@ import styles from './craft.module.css';
 import { MainButton, SecondaryButton } from '@twa-dev/sdk/react';
 import { BottomBar } from '@twa-dev/sdk/react';
 import Image from 'next/image';
+import WebApp from '@twa-dev/sdk';
 
 interface Template {
   id: string;
@@ -98,13 +99,13 @@ function TemplateGrid({ onSelect }: { onSelect: (template: Template) => void }) 
   );
 };
 
-export default function Craft() {
+export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void }) {
   const [prompt, setPrompt] = useState('');
   const [memeType, setMemeType] = useState('ai');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedMeme, setGeneratedMeme] = useState<GeneratedMeme | null>(null);
-  const [mintPrice, setMintPrice] = useState<number>(0);
+  const [mintPrice, setMintPrice] = useState<number>(0.1);
 
   const handleGenerateClick = async () => {
     try {
@@ -114,6 +115,7 @@ export default function Craft() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('chopin-jwt-token')}`
         },
         body: JSON.stringify({
           prompt,
@@ -129,7 +131,7 @@ export default function Craft() {
 
       setGeneratedMeme({
         content_url: data.data.content_url,
-        description: prompt
+        description: data.data.description
       });
 
     } catch (error) {
@@ -161,11 +163,20 @@ export default function Craft() {
       if (!data.success)
         throw new Error(data.error);
 
-      // Clear states after successful creation
+      WebApp.showPopup({
+        title: 'Success! 🎉',
+        message: 'You can see your meme in your library.',
+        buttons: [
+          { text: 'OK', type: 'default' }
+        ]
+      });
+
       setGeneratedMeme(null);
       setMintPrice(0);
       setPrompt('');
       setSelectedTemplate(null);
+
+      onMemeCreated?.();
 
     } catch (error) {
       console.error('Failed to create meme:', error);
@@ -189,7 +200,7 @@ export default function Craft() {
         />
         <button 
           className={styles.submitButton} 
-          onClick={() => handleGenerateClick()}
+          // onClick={() => handleGenerateClick()}
         >
           <svg viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule='evenodd' clipRule={'evenodd'} d="M10.1548 20.2012C15.6776 20.2012 20.1548 15.724 20.1548 10.2012C20.1548 4.67832 15.6776 0.201172 10.1548 0.201172C4.63194 0.201172 0.154785 4.67832 0.154785 10.2012C0.154785 15.724 4.63194 20.2012 10.1548 20.2012ZM10.6189 5.47066C10.4977 5.34414 10.33 5.2726 10.1548 5.2726C9.97954 5.2726 9.8119 5.34414 9.69065 5.47066L6.11922 9.19737C5.87357 9.4537 5.88223 9.86065 6.13856 10.1063C6.3949 10.352 6.80184 10.3433 7.04749 10.087L9.51193 7.51538V14.4869C9.51193 14.8419 9.79974 15.1297 10.1548 15.1297C10.5098 15.1297 10.7976 14.8419 10.7976 14.4869V7.51538L13.2621 10.087C13.5077 10.3433 13.9147 10.352 14.171 10.1063C14.4273 9.86065 14.436 9.4537 14.1903 9.19737L10.6189 5.47066Z" fill="#979797"/>
@@ -216,21 +227,12 @@ export default function Craft() {
               onChange={(e) => setMemeType(e.target.value)}
             />
             <span className={styles.checkmark}></span>
-            Choose
+            Choose Template
           </label>
         </div>
         {memeType === 'template' && (
           <TemplateGrid onSelect={setSelectedTemplate} />
         )}
-        <BottomBar bgColor='#D9DADB'>
-          <MainButton
-            text={isLoading ? 'Generating...' : 'Generate'}
-            color='#e29cff' 
-            textColor='#510e2a'
-            onClick={() => handleGenerateClick()}
-            disabled={isLoading || (memeType === 'template' && !selectedTemplate)}
-          />
-        </BottomBar>
       </div>
       
       {generatedMeme && (
@@ -269,25 +271,38 @@ export default function Craft() {
                   className={styles.tokenIcon}
                 />
               </div>
-              <BottomBar bgColor='#D9DADB'>
-                <MainButton
-                  text="Create Meme"
-                  color='#e29cff' 
-                  textColor='#510e2a'
-                  onClick={handleCreateClick}
-                  disabled={isLoading || mintPrice <= 0}
-                />
-                <SecondaryButton 
-                  text="Cancel"
-                  color='#D0D0D0' 
-                  textColor='#510e2a' 
-                  onClick={() => setGeneratedMeme(null)}
-                />
-              </BottomBar>
             </div>
           </div>
         </div>
       )}
+
+      <BottomBar bgColor='#D9DADB'>
+        {!generatedMeme ? (
+          <MainButton
+            text={isLoading ? 'Generating...' : 'Generate'}
+            color='#e29cff' 
+            textColor='#510e2a'
+            onClick={() => handleGenerateClick()}
+            disabled={isLoading || (memeType === 'template' && !selectedTemplate)}
+          />
+        ) : (
+          <>
+            <MainButton
+              text="Create Meme"
+              color='#e29cff' 
+              textColor='#510e2a'
+              onClick={() => handleCreateClick()}
+              disabled={isLoading || mintPrice <= 0}
+            />
+            <SecondaryButton 
+              text="Cancel"
+              color='#D0D0D0' 
+              textColor='#510e2a' 
+              onClick={() => setGeneratedMeme(null)}
+            />
+          </>
+        )}
+      </BottomBar>
     </>
   );
 };
