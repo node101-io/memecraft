@@ -131,6 +131,8 @@ UserSchema.statics.findUser = function (data, callback) {
 };
 
 UserSchema.statics.createMemeForUser = function (data, callback) {
+  console.log(data);
+
   if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
     return callback('bad_request');
 
@@ -294,6 +296,24 @@ UserSchema.statics.findUserByPublicKey = function (publicKey, with_minted_memes 
         }));
 
       return callback(null, user);
+    })
+    .catch(err => callback(err));
+};
+
+UserSchema.statics.findUserByTelegramId = function (telegramId, callback) {
+  if (!telegramId || typeof telegramId !== 'string')
+    return callback('bad_request');
+
+  User.findOne({ telegram_id: telegramId })
+    .then(user => {
+      if (!user) return callback('user_not_found');
+      
+      User.findUserByPublicKey(user.chopin_public_key, true, (err, user) => {
+        if (err) 
+          return callback(err);
+
+        return callback(null, user);
+      });
     })
     .catch(err => callback(err));
 };

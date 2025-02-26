@@ -193,7 +193,7 @@
 
 .modal {
   background: #D9DADB;
-  border-radius: 0;
+  border-radius: 12px;
   padding: 14px;
   width: 80%;
   max-height: 90vh;

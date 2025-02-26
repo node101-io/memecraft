@@ -41,13 +41,36 @@ export interface Meme {
 }
 
 export default function Home({ user_id }: { user_id: string }) {
-  const [activeTab, setActiveTab] = useState('library');
+  const [activeTab, setActiveTab] = useState('marketplace');
   const [user, setUser] = useState<PopulatedUser>({
     minted_memes: [],
     chopin_public_key: '',
     telegram_id: '',
     balance: 0,
   });
+
+  const refreshUserData = async () => {
+    try {
+      const createResponse = await fetch(`/api/user/create`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('chopin-jwt-token')}`
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          telegram_id: user_id || WebApp.initDataUnsafe.user?.id,
+        })
+      });
+
+      const userData = await createResponse.json();
+      
+      if (!userData.success)
+        throw new Error(userData.error);
+
+      setUser(userData.data);
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  };
 
   useEffect(() => {
     WebApp.CloudStorage.getItem('dev-address', async (error, devAddress) => {
@@ -66,23 +89,7 @@ export default function Home({ user_id }: { user_id: string }) {
       if (chopinData.address !== devAddress)
         WebApp.CloudStorage.setItem('dev-address', chopinData.address, () => console.log('dev-address set'));
 
-      const createResponse = await fetch(`/api/user/create`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('chopin-jwt-token')}`
-        },
-        method: 'POST',
-        body: JSON.stringify({
-          telegram_id: user_id,
-        })
-      });
-
-      const userData = await createResponse.json();
-      console.log('User data from API:', userData);
-
-      if (!userData.success)
-        return console.error(userData);
-
-      setUser(userData.data);
+      await refreshUserData();
     });
   }, []);
 
@@ -121,7 +128,7 @@ export default function Home({ user_id }: { user_id: string }) {
       </header>
       <main className={styles.main}>
         {activeTab === 'marketplace' && <Marketplace user={user} />}
-        {activeTab === 'memecraft' && <Memecraft />}
+        {activeTab === 'memecraft' && <Memecraft onMemeCreated={refreshUserData} />}
         {activeTab === 'library' && <Library user={user} />}
       </main>
     </>

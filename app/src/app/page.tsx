@@ -11,4 +11,4 @@ export default async function Home({ searchParams }: { searchParams: { user_id: 
   return (
     <PageClient user_id={user_id} />
   );
-}
+};

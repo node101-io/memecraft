@@ -12,16 +12,16 @@ import {
 
 import styles from './marketplace.module.css';
 
-import { Meme } from '../page-client';
+import { Meme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
-  { id: 'wifi', src: '/templates/template-pepe.png', alt: 'wifi' },
-  { id: 'elon', src: '/templates/template-cat.png', alt: 'elon' },
-  { id: 'crypto', src: '/templates/template-doge.png', alt: 'crypto' },
-  { id: 'trading', src: '/templates/template-rage.png', alt: 'trading' },
-  { id: 'ethereum', src: '/templates/template-troll.png', alt: 'ethereum' },
-  { id: 'pizza', src: '/templates/template-elon.png', alt: 'pizza' },
-  { id: 'frog', src: '/templates/template-yao.png', alt: 'frog' },
+  { id: 'wifi', src: '/tags/pepe.png', alt: 'wifi' },
+  { id: 'elon', src: '/tags/cat.png', alt: 'elon' },
+  { id: 'crypto', src: '/tags/doge.png', alt: 'crypto' },
+  { id: 'trading', src: '/tags/rage.png', alt: 'trading' },
+  { id: 'ethereum', src: '/tags/troll.png', alt: 'ethereum' },
+  { id: 'pizza', src: '/tags/elon.png', alt: 'pizza' },
+  { id: 'frog', src: '/tags/yao.png', alt: 'frog' },
 ];
 
 const ITEMS_PER_PAGE = 15;
@@ -33,9 +33,7 @@ interface SearchResponse {
   error?: string;
 }
 
-export default function Marketplace({ user }: { user: {
-  balance: number;
-} }) {
+export default function Marketplace({ user }: { user: PopulatedUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -167,10 +165,12 @@ export default function Marketplace({ user }: { user: {
     return () => observer.disconnect();
   }, [loadMoreItems, hasMore, isLoading]);
 
-  // Filter results based on creator
-  const filteredResults = creatorFilter 
-    ? results.filter(meme => meme.creator === creatorFilter) 
-    : results;
+  const filteredResults = results.filter(meme => {
+    if (creatorFilter && meme.creator !== creatorFilter)
+      return false;
+
+    return !user.minted_memes.some(mintedMeme => mintedMeme.meme._id === meme._id);
+  });
 
   return (
     <>
