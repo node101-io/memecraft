@@ -30,6 +30,12 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },
+  name: {
+    type: String,
+    unique: true,
+    trim: true,
+    maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
+  },
   timeout: {
     type: Number,
     default: 0
@@ -377,14 +383,64 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
                   return callback(null);
                 })
                 .catch(_ => callback('database_error'));
-            })
-            return callback(null);
+            });
           })
           .catch(_ => callback('database_error'));
         });
       });
     });
   });
+};
+
+UserSchema.statics.purchaseNameByPublicKey = function (data, callback) {
+  if (!data || typeof data !== 'object')
+    return callback('bad_request');
+
+  if (!data.buyerPublicKey || typeof data.buyerPublicKey !== 'string')
+    return callback('bad_request');
+
+  if (!data.name || typeof data.name !== 'string')
+    return callback('bad_request');
+
+  User.findUserByPublicKey(data.buyerPublicKey, false, (err, buyer) => {
+    if (err)
+      return callback(err);
+
+    if (!buyer)
+      return callback('buyer_not_found');
+
+    User.checkIfNameIsTaken(data.name, (err) => {
+      if (err)
+        return callback(err);
+
+      User.findByIdAndUpdate(
+        buyer._id,
+        { $set: { name: data.name } },
+        { new: true }
+      )
+      .then(updatedUser => {
+        if (!updatedUser)
+          return callback('user_not_found');
+
+        return callback(null, updatedUser?.name);
+      })
+      .catch(_ => callback('database_error'));
+    });
+  });
+};
+
+UserSchema.statics.checkIfNameIsTaken = function (name, callback) {
+  if (!name || typeof name !== 'string')
+    return callback('bad_request');
+
+  User.findOne({ name: name })
+    .then(user => {
+      if (user)
+        return callback('name_already_taken');
+
+      return callback(null);
+    })
+    .catch(_ => callback('database_error'));
 };
 
 UserSchema.statics.findRecentlyAddedMemesByPublicKey = function (publicKey, callback) {
