@@ -33,7 +33,13 @@ interface SearchResponse {
   error?: string;
 }
 
-export default function Marketplace({ user }: { user: PopulatedUser }) {
+export default function Marketplace({ 
+  user, 
+  refreshUserData 
+}: { 
+  user: PopulatedUser;
+  refreshUserData: () => Promise<void>;
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,14 +80,14 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     });
     const data = await response.json();
 
-    console.log(data);
     if (!data.success) {
       console.error('Error buying meme:', data.error);
       return;
     };
 
+    await refreshUserData();
     setSelectedMeme(null);
-  }, []);
+  }, [refreshUserData]);
 
   const handleBuyAndReturnClick = useCallback(async (meme: PopulatedMeme) => {
     await handleBuyClick(meme);

@@ -84,7 +84,7 @@ export default function Library({ user }: { user: PopulatedUser; }) {
   };
 
   const handleNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const value = e.target.value.toLowerCase();
     setNameInput(value);
     
     // Debounce name availability check

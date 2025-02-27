@@ -141,7 +141,7 @@ export default function Home({ user_id }: { user_id: string }) {
         </nav>
       </header>
       <main className={styles.main}>
-        {activeTab === 'marketplace' && <Marketplace user={user} />}
+        {activeTab === 'marketplace' && <Marketplace user={user} refreshUserData={refreshUserData} />}
         {activeTab === 'memecraft' && <Memecraft onMemeCreated={refreshUserData} />}
         {activeTab === 'library' && <Library user={user} />}
       </main>

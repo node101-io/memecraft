@@ -35,7 +35,8 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     trim: true,
-    maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
+    maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH,
+    set: v => v.toLowerCase()
   },
   timeout: {
     type: Number,
@@ -68,17 +69,17 @@ UserSchema.statics.createUserIfNotExists = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
-  if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
+  if (!data.telegram_id || typeof data.telegram_id != 'string')
     return callback('bad_request');
 
-  User.findUserByPublicKey(data.chopin_public_key, true, (err, user) => {
+  User.findUserByTelegramId(data.telegram_id, (err, user) => {
     if (err && err !== 'user_not_found')
       return callback(err);
 
     if (user)
       return callback(null, user);
 
-    if (!data.telegram_id || typeof data.telegram_id != 'string')
+    if (!data.chopin_public_key || typeof data.chopin_public_key != 'string')
       return callback('bad_request');
 
     User.create({

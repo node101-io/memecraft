@@ -61,6 +61,8 @@ bot.on('inline_query', async (ctx) => {
       id: meme.meme._id,
       photo_url: meme.meme.content_url,
       thumb_url: meme.meme.content_url,
+      caption: meme.meme.creator.name ? `Created by ${meme.meme.creator.name}.meme` : undefined,
+      show_caption_above_media: true,
     }));
 
   await ctx.answerInlineQuery(results, {
@@ -81,8 +83,6 @@ bot.on('chosen_inline_result', async (ctx) => {
 
   if (!data.success)
     console.log(`Error marking meme as used: ${data.error}`);
-
-  console.log(data);
 });
 
 await bot.launch();
