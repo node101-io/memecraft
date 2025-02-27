@@ -288,17 +288,20 @@ export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void })
         ) : (
           <>
             <MainButton
-              text="Create Meme"
+              text="Mint Meme"
               color='#e29cff' 
               textColor='#510e2a'
               onClick={() => handleCreateClick()}
               disabled={isLoading || mintPrice <= 0}
             />
             <SecondaryButton 
-              text="Cancel"
+              text="Regenerate"
               color='#D0D0D0' 
               textColor='#510e2a' 
-              onClick={() => setGeneratedMeme(null)}
+              onClick={() => {
+                setGeneratedMeme(null);
+                handleGenerateClick();
+              }}
             />
           </>
         )}
