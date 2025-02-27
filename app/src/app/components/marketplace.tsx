@@ -63,8 +63,6 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
   }, []);
 
   const handleBuyClick = useCallback(async (meme: PopulatedMeme) => {
-    console.log(localStorage.getItem('chopin-jwt-token'));
-
     const response = await fetch('/api/meme/mint', {
       method: 'POST',
       body: JSON.stringify({
@@ -76,6 +74,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     });
     const data = await response.json();
 
+    console.log(data);
     if (!data.success) {
       console.error('Error buying meme:', data.error);
       return;
@@ -86,7 +85,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
 
   const handleBuyAndReturnClick = useCallback(async (meme: PopulatedMeme) => {
     await handleBuyClick(meme);
-    WebApp.switchInlineQuery('');
+    WebApp.switchInlineQuery(meme._id);
   }, [handleBuyClick]);
 
   const fetchResults = useCallback(async (skipCount: number) => {

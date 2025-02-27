@@ -6,16 +6,14 @@ import connectDB from '../../../../../lib/db';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const publicKey = searchParams.get('chopin_public_key');
+  const telegramId = searchParams.get('telegram_id');
   const memeId = searchParams.get('meme_id');
 
   const data = {
-    chopin_public_key: publicKey,
-    memeId: memeId,
+    telegram_id: telegramId,
+    meme_id: memeId,
     dateNow: await Oracle.now()
   };
-
-  console.log(data);
 
   await connectDB();
 

@@ -357,8 +357,8 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
           {
             $inc: { balance: -meme.mint_price },
             $push: { minted_memes:{
-                meme_id: meme._id,
-                last_used_at: data.dateNow
+              meme_id: meme._id,
+              last_used_at: data.dateNow
             }}
           }
         )
@@ -371,21 +371,29 @@ UserSchema.statics.purchaseMemeById = function (data, callback) {
             { $inc: { balance: creatorPayment } }
           )
           .then(() => {
-            User.findUserByPublicKey(MEMECRAFT_PUBLIC_KEY, false, (err, memecraft) => {
+            User.findUserByPublicKey(MEMECRAFT_PUBLIC_KEY, false, (err, memecraftUser) => {
+              return callback(null); // TODO: remove this
+
               if (err)
                 return callback(err);
 
-              if (!memecraft)
+              if (!memecraftUser)
                 return callback('ERROR!');
 
-              User.findByIdAndUpdate(memecraft._id, { $inc: { balance: platformComission } })
+              User.findByIdAndUpdate(memecraftUser._id, { $inc: { balance: platformComission } })
                 .then(() => {
                   return callback(null);
                 })
-                .catch(_ => callback('database_error'));
+                .catch(_ => {
+                  console.log('database_error');
+                  callback('database_error');
+                });
             });
           })
-          .catch(_ => callback('database_error'));
+          .catch(_ => {
+            console.log('database_error');
+            callback('database_error');
+          });
         });
       });
     });
@@ -422,7 +430,7 @@ UserSchema.statics.purchaseNameByPublicKey = function (data, callback) {
         if (!updatedUser)
           return callback('user_not_found');
 
-        return callback(null, updatedUser?.name);
+        return callback(null, updatedUser.name);
       })
       .catch(_ => callback('database_error'));
     });
@@ -467,20 +475,20 @@ UserSchema.statics.findMemeByIdAndMarkAsUsed = function (data, callback) {
   if (!data || typeof data !== 'object')
     return callback('bad_request');
 
-  Meme.findMemeById(data.memeId, (err, meme) => {
+  Meme.findMemeById(data.meme_id, (err, meme) => {
     if (err)
       return callback(err);
 
     if (!meme)
       return callback('meme_not_found');
 
-    if (!data.chopin_public_key || typeof data.chopin_public_key !== 'string')
+    if (!data.telegram_id || typeof data.telegram_id !== 'string')
       return callback('bad_request');
 
     if (!data.dateNow || typeof data.dateNow !== 'number')
       return callback('bad_request');
 
-    User.findUserByPublicKey(data.chopin_public_key, false, (err, user) => {
+    User.findUserByTelegramId(data.telegram_id, (err, user) => {
       if (err)
         return callback(err);
 
@@ -490,7 +498,7 @@ UserSchema.statics.findMemeByIdAndMarkAsUsed = function (data, callback) {
       if (!user.minted_memes || user.minted_memes.length === 0)
         return callback('meme_not_found');
 
-      const memeIndex = user.minted_memes.findIndex(memeObj => memeObj.meme_id.toString() === data.memeId.toString());
+      const memeIndex = user.minted_memes.findIndex(memeObj => memeObj.meme._id.toString() === data.meme_id.toString());
 
       if (memeIndex === -1)
         return callback('meme_not_found');
@@ -506,7 +514,10 @@ UserSchema.statics.findMemeByIdAndMarkAsUsed = function (data, callback) {
 
           return callback(null, updatedUser);
         })
-        .catch(_ => callback('database_error'));
+        .catch(_ => {
+          console.log('database_error');
+          callback('database_error');
+        });
     });
   });
 };

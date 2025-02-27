@@ -43,9 +43,12 @@ bot.on('inline_query', async (ctx) => {
     return;
   };
 
+  console.log(data.data.minted_memes);
+
   const results = data.data.minted_memes
     .slice(data.data.minted_memes.length - 24)
     .reverse()
+    .sort((a, b) => b.last_used_at - a.last_used_at)
     .filter(meme => {
       if (validator.isMongoId(searchTerm))
         return meme.meme._id === searchTerm;
@@ -55,7 +58,7 @@ bot.on('inline_query', async (ctx) => {
 
       return true;
     })
-    .map((meme) => ({
+    .map(meme => ({
       type: 'photo', 
       id: meme.meme._id,
       photo_url: meme.meme.content_url,
@@ -71,6 +74,17 @@ bot.on('inline_query', async (ctx) => {
     },
     cache_time: 0
   });
+});
+
+bot.on('chosen_inline_result', async (ctx) => {
+  const response = await fetch(`https://memecraft.node101.io/api/meme/used?telegram_id=${ctx.from.id}&meme_id=${ctx.chosenInlineResult.result_id}`);
+
+  const data = await response.json();
+
+  if (!data.success)
+    console.log(`Error marking meme as used: ${data.error}`);
+
+  console.log(data);
 });
 
 await bot.launch();

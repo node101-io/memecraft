@@ -11,6 +11,8 @@ export async function POST(req) {
     memeId: body.memeId
   };
 
+  console.log(data);
+
   await connectDB();
 
   return Response.json(await new Promise((resolve) => {
