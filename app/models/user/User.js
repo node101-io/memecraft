@@ -33,6 +33,7 @@ const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     unique: true,
+    sparse: true,
     trim: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
   },

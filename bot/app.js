@@ -43,8 +43,6 @@ bot.on('inline_query', async (ctx) => {
     return;
   };
 
-  console.log(data.data.minted_memes);
-
   const results = data.data.minted_memes
     .slice(data.data.minted_memes.length - 24)
     .reverse()
