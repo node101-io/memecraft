@@ -21,7 +21,7 @@ export async function GET(req) {
           console.error('Filter error:', err);
           resolve({ success: false, error: err });
           return;
-        }
+        };
 
         const hasMore = memes.length === filters.limit;
         

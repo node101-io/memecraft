@@ -31,6 +31,125 @@
   font-weight: 500;
 }
 
+/* Name minting section styles */
+.nameSection {
+  margin: 20px 22px 10px;
+  padding: 15px;
+  background-color: #EAB7FF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Update this for users who already have a name */
+.userName {
+  font-size: 14px;
+  font-weight: normal;
+  color: #84888B;
+  background-color: #D9DADB;
+  padding: 3px 10px;
+  border-radius: 20px;
+  position: absolute;
+  right: 32px;
+  z-index: 1;
+}
+
+.nameMintingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.nameMintingTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #510E2A;
+  margin-bottom: 5px;
+  margin-right: auto;
+}
+
+.nameInputWrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.nameInput {
+  width: 100%;
+  padding: 10px 12px;
+  padding-right: 60px;
+  background-color: #D0D0D0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.nameInputError {
+  border-color: #ff6b6b;
+}
+
+.nameInput::placeholder {
+  color: #8F8F8F;
+}
+
+.nameTld {
+  position: absolute;
+  right: 10px;
+  color: #8F8F8F;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.nameCheckingSpinner {
+  position: absolute;
+  right: 70px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(226, 156, 255, 0.3);
+  border-top: 2px solid #E29CFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.nameErrorMessage {
+  color: #ff6b6b;
+  font-size: 12px;
+  margin-top: -5px;
+  align-self: flex-start;
+}
+
+.mintNameButton {
+  background-color: #E29CFF;
+  color: #510E2A;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.mintNameButton:hover:not(:disabled) {
+  background-color: #d87ff0;
+}
+
+.mintNameButton:disabled {
+  background-color: #c0c0c0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .memesGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

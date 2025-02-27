@@ -11,13 +11,10 @@ export async function POST(req) {
     memeId: body.memeId
   };
 
-  console.log('data', data);
-
   await connectDB();
 
   return Response.json(await new Promise((resolve) => {
     User.purchaseMemeById(data, (err) => {
-      console.log('here4', err);
       if (err)
         resolve({ success: false, error: err });
 

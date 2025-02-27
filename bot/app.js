@@ -10,7 +10,6 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.on('inline_query', async (ctx) => {
   const userId = ctx.from.id;
   const searchTerm = ctx.inlineQuery.query;
-  console.log(searchTerm);
 
   const response = await fetch(`https://memecraft.node101.io/api/user/show?telegram_id=${userId}`);
 
@@ -30,7 +29,7 @@ bot.on('inline_query', async (ctx) => {
     return;
   };
 
-  if (!data.data.minted_memes) {
+  if (!data.data.minted_memes || !data.data.minted_memes.length) {
     console.log(`No memes found for user ${userId}`);
     await ctx.answerInlineQuery([], {
       button: {

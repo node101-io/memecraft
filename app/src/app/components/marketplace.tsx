@@ -12,7 +12,7 @@ import {
 
 import styles from './marketplace.module.css';
 
-import { Meme, PopulatedUser } from '../page-client';
+import { PopulatedMeme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
   { id: 'wifi', src: '/tags/pepe.png', alt: 'wifi' },
@@ -28,7 +28,7 @@ const ITEMS_PER_PAGE = 15;
 
 interface SearchResponse {
   success: boolean;
-  data: Meme[];
+  data: PopulatedMeme[];
   hasMore: boolean;
   error?: string;
 }
@@ -37,11 +37,11 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [results, setResults] = useState<Meme[]>([]);
-  const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null);
+  const [results, setResults] = useState<PopulatedMeme[]>([]);
+  const [selectedMeme, setSelectedMeme] = useState<PopulatedMeme | null>(null);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [creatorFilter, setCreatorFilter] = useState<string | null>(null);
+  const [creatorFilter, setCreatorFilter] = useState<PopulatedMeme['creator'] | null>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const handleTemplateClick = useCallback((tag: string) => {
@@ -53,7 +53,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     });
   }, []);
 
-  const handleMemeClick = useCallback(async (meme: Meme) => {
+  const handleMemeClick = useCallback(async (meme: PopulatedMeme) => {
     setSelectedMeme(meme);
   }, []);
 
@@ -62,7 +62,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     setSearchTerm('');
   }, []);
 
-  const handleBuyClick = useCallback(async (meme: Meme) => {
+  const handleBuyClick = useCallback(async (meme: PopulatedMeme) => {
     console.log(localStorage.getItem('chopin-jwt-token'));
 
     const response = await fetch('/api/meme/mint', {
@@ -84,7 +84,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     setSelectedMeme(null);
   }, []);
 
-  const handleBuyAndReturnClick = useCallback(async (meme: Meme) => {
+  const handleBuyAndReturnClick = useCallback(async (meme: PopulatedMeme) => {
     await handleBuyClick(meme);
     WebApp.switchInlineQuery('');
   }, [handleBuyClick]);
@@ -93,7 +93,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
     try {
       const response = await fetch(`/api/meme/filter?` + 
         `skip=${skipCount}&limit=${ITEMS_PER_PAGE}` + 
-        (creatorFilter ? `&creator=${creatorFilter}` : '') + 
+        (creatorFilter ? `&creator=${creatorFilter._id}` : '') + 
         (selectedTags.length > 0 ? `&tags=${selectedTags.join(',')}` : '') + 
         (searchTerm ? `&description=${searchTerm}` : ''));
       
@@ -166,7 +166,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
   }, [loadMoreItems, hasMore, isLoading]);
 
   const filteredResults = results.filter(meme => {
-    if (creatorFilter && meme.creator !== creatorFilter)
+    if (creatorFilter && meme.creator._id !== creatorFilter._id)
       return false;
 
     return !user.minted_memes.some(mintedMeme => mintedMeme.meme._id === meme._id);
@@ -216,7 +216,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
               <path d="M300.188,246L484.14,62.04c5.06-5.064,7.852-11.82,7.86-19.024c0-7.208-2.792-13.972-7.86-19.028L468.02,7.872 c-5.068-5.076-11.824-7.856-19.036-7.856c-7.2,0-13.956,2.78-19.024,7.856L246.008,191.82L62.048,7.872 c-5.06-5.076-11.82-7.856-19.028-7.856c-7.2,0-13.96,2.78-19.02,7.856L7.872,23.988c-10.496,10.496-10.496,27.568,0,38.052 L191.828,246L7.872,429.952c-5.064,5.072-7.852,11.828-7.852,19.032c0,7.204,2.788,13.96,7.852,19.028l16.124,16.116 c5.06,5.072,11.824,7.856,19.02,7.856c7.208,0,13.968-2.784,19.028-7.856l183.96-183.952l183.952,183.952 c5.068,5.072,11.824,7.856,19.024,7.856h0.008c7.204,0,13.96-2.784,19.028-7.856l16.12-16.116 c5.06-5.064,7.852-11.824,7.852-19.028c0-7.204-2.792-13.96-7.852-19.028L300.188,246z"></path>
             </svg>
           </button>
-          <span>Creator: {creatorFilter}</span>
+          <span>Creator: {creatorFilter.name || creatorFilter.chopin_public_key || creatorFilter._id}{creatorFilter.name ? '.meme' : ''}</span>
         </div>
       )}
       <div className={styles.resultsGrid}>
@@ -286,7 +286,7 @@ export default function Marketplace({ user }: { user: PopulatedUser }) {
                 role="button"
                 tabIndex={0}
               >
-                Creator: {selectedMeme.creator}
+                Creator: {selectedMeme.creator.name || selectedMeme.creator.chopin_public_key || selectedMeme.creator._id}{selectedMeme.creator.name ? '.meme' : ''}
               </span>
               <div className={styles.modalPrice}>
                 {selectedMeme.mint_price}

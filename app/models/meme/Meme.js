@@ -9,7 +9,8 @@ const MAX_TAGS_ARRAY_LENGTH = 1e4;
 
 const MemeSchema = new mongoose.Schema({
   creator: {
-    type: mongoose.Types.ObjectId, // user.telegram_id
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
     trim: true,
     maxlength: MAX_DATABASE_TEXT_FIELD_LENGTH
@@ -89,6 +90,7 @@ MemeSchema.statics.findMemesByFilters = function (data, callback) {
 
   Meme
     .find(filters.length ? { $and: filters } : {})
+    .populate('creator', 'name chopin_public_key')
     .sort()
     .skip(skip)
     .limit(limit)
@@ -96,12 +98,21 @@ MemeSchema.statics.findMemesByFilters = function (data, callback) {
       if(!memes)
         return callback('document_not_found');
 
-      return callback(null, memes);
+      const transformedMemes = memes.map(meme => {
+        const memeObj = meme.toObject ? meme.toObject() : meme;
+        
+        if (memeObj.creator)
+          memeObj.creatorName = memeObj.creator.name || memeObj.creator.chopin_public_key;
+        
+        return memeObj;
+      });
+
+      return callback(null, transformedMemes);
     })
     .catch(err => {
-      console.error(123, err);
-      return callback ('database_error');
-    })
+      console.error(err);
+      return callback('database_error');
+    });
 };
 
 export const Meme = mongoose.models.Meme || mongoose.model('Meme', MemeSchema);

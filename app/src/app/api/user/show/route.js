@@ -21,7 +21,9 @@ export async function GET(req) {
         resolve({ success: true, data: user });
       });
     } else {
+      console.log('telegramId', telegramId);
       User.findUserByTelegramId(telegramId, (err, user) => {
+        console.log('user', user, err);
         if (err)
           resolve({ success: false, error: err });
 

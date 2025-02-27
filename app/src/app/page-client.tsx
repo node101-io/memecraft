@@ -15,6 +15,7 @@ export interface PopulatedUser {
   chopin_public_key: string;
   telegram_id: string;
   balance: number;
+  name?: string;
   minted_memes: {
     meme: Meme;
     last_used_at: number;
@@ -29,6 +30,19 @@ export interface User {
     meme_id: string;
     last_used_at: number;
   }[];
+};
+
+export interface PopulatedMeme {
+  _id: string;
+  description: string;
+  tags: string[];
+  content_url: string;
+  mint_price: number;
+  creator: {
+    name: string;
+    chopin_public_key: string;
+    _id: string;
+  };
 };
 
 export interface Meme {
