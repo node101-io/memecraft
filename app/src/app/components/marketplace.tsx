@@ -14,14 +14,21 @@ import styles from './marketplace.module.css';
 import { PopulatedMeme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
-  { id: 'wifi', src: '/tags/pepe.png' },
-  { id: 'elon', src: '/tags/cat.png' },
-  { id: 'crypto', src: '/tags/doge.png' },
-  { id: 'trading', src: '/tags/rage.png' },
-  { id: 'ethereum', src: '/tags/troll.png' },
-  { id: 'pizza', src: '/tags/elon.png' },
-  { id: 'frog', src: '/tags/yao.png' },
-  { id: 'bitcoin', src: '/tags/yao.png' },
+  { id: 'gaming', src: '/tags/pepe.png' },
+  { id: 'movies', src: '/tags/cat.png' },
+  { id: 'tv', src: '/tags/doge.png' },
+  { id: 'dark', src: '/tags/rage.png' },
+  { id: 'political', src: '/tags/troll.png' },
+  { id: 'relationship', src: '/tags/elon.png' },
+  { id: 'sports', src: '/tags/yao.png' },
+  { id: 'hodl', src: '/tags/yao.png' },
+  { id: 'fomo', src: '/tags/pepe.png' },
+  { id: 'rekt', src: '/tags/cat.png' },
+  { id: 'whale', src: '/tags/doge.png' },
+  { id: 'lambo', src: '/tags/rage.png' },
+  { id: 'mooning', src: '/tags/troll.png' },
+  { id: 'gm', src: '/tags/elon.png' },
+  { id: 'gmodular', src: '/tags/yao.png' },
 ];
 
 const ITEMS_PER_PAGE = 15;

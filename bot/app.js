@@ -107,15 +107,15 @@ const startBot = async () => {
     process.once('SIGINT', () => bot.stop('SIGINT'));
     process.once('SIGTERM', () => bot.stop('SIGTERM'));
     
-    console.log('Bot başlatılıyor...');
-    bot.launch(() => {
-      console.log('Bot başarıyla başlatıldı!');
+    console.log('Starting bot...');
+    await bot.launch(() => {
+      console.log('Bot successfully started!');
     });
   } catch (error) {
-    console.error('Bot çalışırken bir hata oluştu:', error);
-    console.log('Bot 5 saniye içinde yeniden başlatılacak...');
-    setTimeout(startBot, 5000);
-  }
+    console.error('An error occurred while running the bot:', error);
+    console.log('Bot will restart in 5 seconds...');
+    setTimeout(startBot, 1000);
+  };
 };
 
 startBot();
