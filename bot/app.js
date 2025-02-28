@@ -85,4 +85,21 @@ bot.on('chosen_inline_result', async (ctx) => {
     console.log(`Error marking meme as used: ${data.error}`);
 });
 
+bot.command('start', async (ctx) => {
+  const userId = ctx.from.id;
+  
+  await ctx.reply('Welcome to MemeCraft!', {
+    reply_markup: {
+      inline_keyboard: [[
+        {
+          text: 'Open MemeCraft',
+          web_app: {
+            url: `https://memecraft.node101.io?user_id=${userId}`
+          }
+        }
+      ]]
+    }
+  });
+});
+
 await bot.launch();
