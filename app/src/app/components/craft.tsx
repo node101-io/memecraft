@@ -100,7 +100,7 @@ function TemplateGrid({ onSelect }: { onSelect: (template: Template) => void }) 
 };
 
 const FREE_GENERATIONS_PER_DAY = 5;
-const PAID_GENERATION_COST = 0.5;
+const PAID_GENERATION_COST = 1;
 
 export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void }) {
   const [prompt, setPrompt] = useState('');

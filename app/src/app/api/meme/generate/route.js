@@ -2,8 +2,7 @@ import { Client } from '../../../services/api';
 import { User } from '../../../../../models/user/User';
 import { getAddress } from '@chopinframework/next';
 
-const FREE_GENERATIONS_PER_DAY = 5;
-const PAID_GENERATION_COST = 0.5;
+const PAID_GENERATION_COST = 1;
 
 export async function POST(req) {
   try {
