@@ -3,6 +3,12 @@
 ## Table of Contents
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
+  - [Telegram Mini App](#1️⃣-telegram-mini-app)
+  - [User Authentication & Wallet Management](#2️⃣-user-authentication--wallet-management)
+  - [AI-Powered Meme Generation](#3️⃣-ai-powered-meme-generation)
+  - [NFT Minting & Blockchain Execution](#4️⃣-nft-minting--blockchain-execution)
+  - [Meme Marketplace & Monetization](#5️⃣-meme-marketplace--monetization)
+  - [Scalability & Decentralization](#6️⃣-scalability--decentralization)
 - [How It Works?](#how-it-works)
   - [Create Your Meme with AI](#create-your-meme-with-ai)
   - [Mint Your Meme as an NFT](#mint-your-meme-as-an-nft)
@@ -35,11 +41,36 @@ Beyond just fun creation users can mint their memes as NFTs and others can colle
 
 ## System Architecture
 ![image](https://github.com/user-attachments/assets/09047e43-4869-43d2-aba0-c4f5056209a5)
-- **Telegram Mini App**: MemeCraft operates within Telegram, allowing seamless user interaction in any chat.
-- **AI-Powered Meme Generation**: AI suggests meme captions or formats based on user input.
-- **NFT Minting & Collecting**: Users can mint memes as NFTs and collect them. Meme hard, mint harder!
-- **Chopin Framework**: Provides the infrastructure for MemeCraft to be a sovereign rollup on Celestia, ensuring security and decentralization.
-- **Storage & Scalability**: MemeCraft optimizes meme storage using Pinata’s IPFS infrastructure.
+### 1️⃣ **Telegram Mini App**
+
+MemeCraft operates as a **Telegram WebApp**, allowing users to generate, mint, and trade memes via inline queries. The frontend (**Next.js**) communicates with the Backend API (**Chopin Framework**) for authentication, meme management, and blockchain interactions.
+
+### 2️⃣ **User Authentication & Wallet Management**
+- Users authenticate via JWT tokens, with **MPC wallets** generated for secure blockchain interactions.
+- The **Chopin Framework** intercepts and sequences transactions, syncing timestamps with **Chopin Oracle**.
+
+### 3️⃣ **AI-Powered Meme Generation**
+- Users input prompts, and AI generates meme text.
+- Meme data is uploaded to Pinata (IPFS) for decentralized storage.
+
+### 4️⃣ **NFT Minting & Blockchain Execution**
+- Users set a mint price and submit a `POST /api/meme/create` request.
+- The Chopin Framework:
+  - **Verifies signatures**, retrieves the **user’s MPC wallet**, and sequences the transaction.
+  - Mints memes as NFTs, updating user balances.
+  - Batches transactions for efficiency before committing them to Celestia Blockchain.
+
+### 5️⃣ **Meme Marketplace & Monetization**
+- Users buy/sell memes via `POST /api/meme/mint.`
+- The Chopin Framework:
+  - Verifies buyer signatures and deducts balances.
+  - Makes the NFT / Meme transaction and updates creator earnings.
+  - **Processes platform fees** before confirming the transaction.
+
+### 6️⃣ **Scalability & Decentralization**
+- **[Chopin Framework](https://chopin.sh/docs/quickstart)** ensures rollup execution with minimal gas costs.
+- **[Pinata (IPFS)](https://www.pinata.cloud/)** provides scalable, decentralized storage.
+- **[Celestia Blockchain](https://celestia.org/)** secures NFT ownership while enabling fast settlement.
 
 ## How It Works?
 MemeCraft makes meme creation, minting, and collecting effortless—all within Telegram. Whether you’re a casual memer or an NFT collector, here’s how you can get started:
