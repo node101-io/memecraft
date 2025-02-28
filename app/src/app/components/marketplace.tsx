@@ -14,19 +14,19 @@ import styles from './marketplace.module.css';
 import { PopulatedMeme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
-  { id: 'dark', src: '/tags/dark.png' },
+  { id: 'gmodular', src: '/tags/gmodular.png' },
+  { id: 'lambo', src: '/tags/lambo.jpg' },
   { id: 'movies', src: '/tags/movies.jpg' },
+  { id: 'political', src: '/tags/politics.jpg' },
   { id: 'hodl', src: '/tags/hodl.png' },
+  { id: 'sports', src: '/tags/sports.png' },
+  { id: 'whale', src: '/tags/whale.png' },
   { id: 'fomo', src: '/tags/fomo.jpg' },
   { id: 'gm', src: '/tags/gm.jpg' },
-  { id: 'lambo', src: '/tags/lambo.jpg' },
-  { id: 'mooning', src: '/tags/mooning.jpg' },
-  { id: 'political', src: '/tags/politics.jpg' },
   { id: 'relationship', src: '/tags/relationship.png' },
-  { id: 'sports', src: '/tags/sports.png' },
   { id: 'gaming', src: '/tags/gaming.png' },
-  { id: 'whale', src: '/tags/whale.png' },
-  { id: 'gmodular', src: '/tags/gmodular.png' }
+  { id: 'mooning', src: '/tags/mooning.jpg' },
+  { id: 'dark', src: '/tags/dark.png' },
 ];
 
 const ITEMS_PER_PAGE = 15;
