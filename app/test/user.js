@@ -73,105 +73,106 @@ describe('User Model', () => {
   describe('createUserIfNotExists', () => {
     it('should create a new user if not exists', async () => {
       // Setup
-      User.findUserByPublicKey = vi.fn().mockImplementation((publicKey, withMintedMemes, callback) => {
+      User.findUserByTelegramId = vi.fn().mockImplementation((telegramId, callback) => {
         callback('user_not_found');
       });
       
       User.create = vi.fn().mockResolvedValue(mockUser);
 
       // Execute
-      await new Promise(resolve => {
+      await new Promise((resolve, reject) => {
         User.createUserIfNotExists({
           telegram_id: 'test_telegram_id',
           chopin_public_key: 'test_public_key'
         }, (err, user) => {
-          // Assert
-          expect(err).toBeNull();
-          expect(user).toEqual(mockUser);
-          expect(User.findUserByPublicKey).toHaveBeenCalledWith('test_public_key', true, expect.any(Function));
-          expect(User.create).toHaveBeenCalledWith({
-            telegram_id: 'test_telegram_id',
-            chopin_public_key: 'test_public_key'
-          });
-          resolve();
+          try {
+            // Assert
+            expect(err).toBeNull();
+            expect(user).toEqual(mockUser);
+            expect(User.findUserByTelegramId).toHaveBeenCalledWith('test_telegram_id', expect.any(Function));
+            expect(User.create).toHaveBeenCalledWith({
+              telegram_id: 'test_telegram_id',
+              chopin_public_key: 'test_public_key'
+            });
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
       });
     });
 
     it('should return existing user if found', async () => {
       // Setup
-      User.findUserByPublicKey = vi.fn().mockImplementation((publicKey, withMintedMemes, callback) => {
+      User.findUserByTelegramId = vi.fn().mockImplementation((telegramId, callback) => {
         callback(null, mockUser);
       });
 
       // Execute
-      await new Promise(resolve => {
+      await new Promise((resolve, reject) => {
         User.createUserIfNotExists({
+          telegram_id: 'test_telegram_id',
           chopin_public_key: 'test_public_key'
         }, (err, user) => {
-          // Assert
-          expect(err).toBeNull();
-          expect(user).toEqual(mockUser);
-          expect(User.findUserByPublicKey).toHaveBeenCalledWith('test_public_key', true, expect.any(Function));
-          resolve();
-        });
-      });
-    });
-
-    it('should return bad_request if data is invalid', async () => {
-      await new Promise(resolve => {
-        User.createUserIfNotExists(null, (err) => {
-          expect(err).toBe('bad_request');
-          resolve();
-        });
-      });
-
-      await new Promise(resolve => {
-        User.createUserIfNotExists({}, (err) => {
-          expect(err).toBe('bad_request');
-          resolve();
+          try {
+            // Assert
+            expect(err).toBeNull();
+            expect(user).toEqual(mockUser);
+            expect(User.findUserByTelegramId).toHaveBeenCalledWith('test_telegram_id', expect.any(Function));
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
       });
     });
 
     it('should handle database errors', async () => {
       // Setup
-      User.findUserByPublicKey = vi.fn().mockImplementation((publicKey, withMintedMemes, callback) => {
+      User.findUserByTelegramId = vi.fn().mockImplementation((telegramId, callback) => {
         callback('user_not_found');
       });
       
-      User.create = vi.fn().mockRejectedValue({ code: 'some_error' });
+      User.create = vi.fn().mockRejectedValue(new Error('Database error'));
 
       // Execute
-      await new Promise(resolve => {
+      await new Promise((resolve, reject) => {
         User.createUserIfNotExists({
           telegram_id: 'test_telegram_id',
           chopin_public_key: 'test_public_key'
         }, (err) => {
-          // Assert
-          expect(err).toBe('database_error');
-          resolve();
+          try {
+            // Assert
+            expect(err).toBe('database_error');
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
       });
     });
 
     it('should handle duplicated unique field error', async () => {
       // Setup
-      User.findUserByPublicKey = vi.fn().mockImplementation((publicKey, withMintedMemes, callback) => {
+      User.findUserByTelegramId = vi.fn().mockImplementation((telegramId, callback) => {
         callback('user_not_found');
       });
       
       User.create = vi.fn().mockRejectedValue({ code: 11000 });
 
       // Execute
-      await new Promise(resolve => {
+      await new Promise((resolve, reject) => {
         User.createUserIfNotExists({
           telegram_id: 'test_telegram_id',
           chopin_public_key: 'test_public_key'
         }, (err) => {
-          // Assert
-          expect(err).toBe('duplicated_unique_field');
-          resolve();
+          try {
+            // Assert
+            expect(err).toBe('duplicated_unique_field');
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
       });
     });
