@@ -254,16 +254,31 @@ UserSchema.statics.checkIfUserIsTimedOut = function (data, callback) {
 UserSchema.statics.updateBalanceById = function (id, incrementBalanceBy, callback) {
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
-  if (!incrementBalanceBy || typeof incrementBalanceBy != 'number' || incrementBalanceBy > MAX_BALANCE_VALUE || incrementBalanceBy < 0){
-    return callback('bad_request');
-  }
-  User.findByIdAndUpdate(id, {$inc: {
-    balance: incrementBalanceBy
-  }}, { new: true })
-    .then(user => {
-      if (!user) return callback('document_not_found');
 
-      return callback(null, user);
+  if (!incrementBalanceBy || typeof incrementBalanceBy != 'number' || incrementBalanceBy > MAX_BALANCE_VALUE)
+    return callback('bad_request');
+
+  // Check if the resulting balance would be negative
+  User.findById(id)
+    .then(user => {
+      if (!user) 
+        return callback('document_not_found');
+
+      if (user.balance + incrementBalanceBy < 0)
+        return callback('insufficient_balance');
+
+      User.findByIdAndUpdate(id, {$inc: {
+        balance: incrementBalanceBy
+      }}, { new: true })
+        .then(updatedUser => {
+          if (!updatedUser) 
+            return callback('document_not_found');
+
+          return callback(null, updatedUser);
+        })
+        .catch(err => {
+          if (err) return callback('database_error');
+        });
     })
     .catch(err => {
       if (err) return callback('database_error');
@@ -520,6 +535,29 @@ UserSchema.statics.findMemeByIdAndMarkAsUsed = function (data, callback) {
           console.log('database_error');
           callback('database_error');
         });
+    });
+  });
+};
+
+UserSchema.statics.deductBalance = function (chopin_public_key, amount, callback) {
+  if (!chopin_public_key || typeof amount !== 'number' || amount <= 0)
+    return callback('bad_request');
+
+  User.findUserByPublicKey(chopin_public_key, false, (err, user) => {
+    if (err)
+      return callback(err);
+
+    if (!user)
+      return callback('user_not_found');
+
+    if (user.balance < amount)
+      return callback('insufficient_balance');
+
+    User.updateBalanceById(user._id, -amount, (err, updatedUser) => {
+      if (err)
+        return callback(err);
+
+      return callback(null, updatedUser);
     });
   });
 };

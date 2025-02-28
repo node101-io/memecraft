@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './craft.module.css';
 import { MainButton, SecondaryButton } from '@twa-dev/sdk/react';
 import { BottomBar } from '@twa-dev/sdk/react';
@@ -99,6 +99,9 @@ function TemplateGrid({ onSelect }: { onSelect: (template: Template) => void }) 
   );
 };
 
+const FREE_GENERATIONS_PER_DAY = 5;
+const PAID_GENERATION_COST = 0.5;
+
 export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void }) {
   const [prompt, setPrompt] = useState('');
   const [memeType, setMemeType] = useState('ai');
@@ -106,6 +109,30 @@ export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void })
   const [isLoading, setIsLoading] = useState(false);
   const [generatedMeme, setGeneratedMeme] = useState<GeneratedMeme | null>(null);
   const [mintPrice, setMintPrice] = useState<number>(0.1);
+  const [freeGenerationsLeft, setFreeGenerationsLeft] = useState<number>(FREE_GENERATIONS_PER_DAY);
+
+  useEffect(() => {
+    // Check remaining free generations on component mount
+    WebApp.CloudStorage.getItem('last-generation-date', (error, lastDate) => {
+      if (error) return console.error(error);
+
+      const today = new Date().toDateString();
+      
+      if (lastDate !== today) {
+        // Reset counter for new day
+        WebApp.CloudStorage.setItem('free-generations-left', FREE_GENERATIONS_PER_DAY.toString(), () => {
+          setFreeGenerationsLeft(FREE_GENERATIONS_PER_DAY);
+        });
+        WebApp.CloudStorage.setItem('last-generation-date', today);
+      } else {
+        // Get remaining generations for today
+        WebApp.CloudStorage.getItem('free-generations-left', (error, remaining) => {
+          if (error) return console.error(error);
+          setFreeGenerationsLeft(remaining ? parseInt(remaining) : 0);
+        });
+      }
+    });
+  }, []);
 
   const handleGenerateClick = async () => {
     try {
@@ -120,19 +147,39 @@ export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void })
         body: JSON.stringify({
           prompt,
           templateId: selectedTemplate?.id,
-          mode: memeType
+          mode: memeType,
+          freeGenerationsLeft
         }),
       });
 
       const data = await response.json();
       
-      if (!data.success)
-        throw new Error(data.error);
+      if (!data.success) {
+        WebApp.showPopup({
+          title: 'Error',
+          message: data.error === 'Insufficient balance' ? 
+            'You need 0.5 tokens to generate a meme.' : 
+            'Failed to generate meme.',
+          buttons: [{ text: 'OK', type: 'default' }]
+        });
+        return;
+      }
 
       setGeneratedMeme({
         content_url: data.data.content_url,
         description: data.data.description
       });
+
+      // Update free generations count if it was a free generation
+      if (freeGenerationsLeft > 0) {
+        const newCount = freeGenerationsLeft - 1;
+        WebApp.CloudStorage.setItem('free-generations-left', newCount.toString(), () => {
+          setFreeGenerationsLeft(newCount);
+        });
+      }
+
+      // Refresh user data to update balance
+      onMemeCreated?.();
 
     } catch (error) {
       console.error('Failed to generate meme:', error);
@@ -189,6 +236,11 @@ export default function Craft({ onMemeCreated }: { onMemeCreated?: () => void })
     <>
       <h3 className={styles.subtitle}>
         CHO-PILOT
+        <span className={styles.generationsLeft}>
+          {freeGenerationsLeft > 0 ? 
+            `${freeGenerationsLeft} free generations left today` : 
+            `Paid generation (${PAID_GENERATION_COST} tokens)`}
+        </span>
       </h3>
       <div className={styles.inputWrapper}>
         <textarea
