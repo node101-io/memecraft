@@ -14,21 +14,21 @@ import styles from './marketplace.module.css';
 import { PopulatedMeme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
-  { id: 'gaming', src: '/tags/pepe.png' },
-  { id: 'movies', src: '/tags/cat.png' },
-  { id: 'tv', src: '/tags/doge.png' },
-  { id: 'dark', src: '/tags/rage.png' },
-  { id: 'political', src: '/tags/troll.png' },
-  { id: 'relationship', src: '/tags/elon.png' },
-  { id: 'sports', src: '/tags/yao.png' },
-  { id: 'hodl', src: '/tags/yao.png' },
-  { id: 'fomo', src: '/tags/pepe.png' },
-  { id: 'rekt', src: '/tags/cat.png' },
-  { id: 'whale', src: '/tags/doge.png' },
-  { id: 'lambo', src: '/tags/rage.png' },
-  { id: 'mooning', src: '/tags/troll.png' },
-  { id: 'gm', src: '/tags/elon.png' },
-  { id: 'gmodular', src: '/tags/yao.png' },
+  { id: 'dark', src: '/tags/dark.png' },
+  { id: 'movies', src: '/tags/movies.jpg' },
+  { id: 'gaming', src: '/tags/dark.png' },
+  { id: 'tv', src: '/tags/dark.png' },
+  { id: 'political', src: '/tags/dark.png' },
+  { id: 'relationship', src: '/tags/dark.png' },
+  { id: 'sports', src: '/tags/dark.png' },
+  { id: 'hodl', src: '/tags/dark.png' },
+  { id: 'fomo', src: '/tags/dark.png' },
+  { id: 'rekt', src: '/tags/dark.png' },
+  { id: 'whale', src: '/tags/dark.png' },
+  { id: 'lambo', src: '/tags/dark.png' },
+  { id: 'mooning', src: '/tags/dark.png' },
+  { id: 'gm', src: '/tags/dark.png' },
+  { id: 'gmodular', src: '/tags/dark.png' },
 ];
 
 const ITEMS_PER_PAGE = 15;
