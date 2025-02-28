@@ -213,6 +213,13 @@ IMGFLIP_PASSWORD='<imgflip_password>'
 pnpm run dev
 ```
 
+## Running Tests
+To run the tests, use the following command:
+```bash
+pnpm run test
+```
+This will run all 25 unit tests and will print the result.
+
 ## Contact With Us
 Telegram:
 [@necipsagiro](https://t.me/necipsagiro) | [@hatunozcn](https://t.me/hatunozcn) | [@yakupaltay](https://t.me/yakupaltay)
