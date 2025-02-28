@@ -43,8 +43,6 @@ const MemeSchema = new mongoose.Schema({
   }
 });
 
-//create meme inside the user model
-
 MemeSchema.statics.findMemeById = function (id, callback){
   if (!id || !validator.isMongoId(id.toString()))
     return callback('bad_request');
@@ -59,20 +57,6 @@ MemeSchema.statics.findMemeById = function (id, callback){
       if (err) return callback('database_error');
     });
 };
-// MemeSchema.statics.findMemeByIdAndDelete = function (id, callback) {
-//   if (!id || !validator.isMongoId(id.toString()))
-//     return callback('bad_request');
-
-//   Meme.findOneAndDelete({ _id: id })
-//   .catch(err => {
-//     if (err) return callback('database_error');
-//   })
-//   .then(meme => {
-//     if (!meme) return callback('document_not_found');
-
-//     return callback(null);
-//   });
-// }; // transfer into user model
 MemeSchema.statics.findMemesByFilters = function (data, callback) {
   const filters = [];
 

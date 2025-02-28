@@ -22,6 +22,7 @@ const POPULAR_TEMPLATES = [
   { id: 'ethereum', src: '/tags/troll.png', alt: 'ethereum' },
   { id: 'pizza', src: '/tags/elon.png', alt: 'pizza' },
   { id: 'frog', src: '/tags/yao.png', alt: 'frog' },
+  { id: 'bitcoin', src: '/tags/yao.png', alt: 'bitcoin' },
 ];
 
 const ITEMS_PER_PAGE = 15;

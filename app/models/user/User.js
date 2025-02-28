@@ -163,6 +163,18 @@ UserSchema.statics.createMemeForUser = function (data, callback) {
     if (!data.memeData.tags || !Array.isArray(data.memeData.tags) || data.memeData.tags.length === 0)
       return callback('bad_request');
 
+    data.memeData.tags = data.memeData.tags
+      .map(tag => {
+        if (typeof tag !== 'string') return '';
+        
+        let cleanedTag = tag.toLowerCase();
+        
+        cleanedTag = cleanedTag.replace(/[^\w\s]/g, '');
+        
+        return cleanedTag.trim();
+      })
+      .filter(tag => tag && tag.length > 0);
+
     Meme.create({
       creator: user._id,
       content_url: data.memeData.content_url,
