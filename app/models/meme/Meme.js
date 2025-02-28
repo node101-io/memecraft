@@ -75,7 +75,7 @@ MemeSchema.statics.findMemesByFilters = function (data, callback) {
   Meme
     .find(filters.length ? { $and: filters } : {})
     .populate('creator', 'name chopin_public_key')
-    .sort()
+    .sort({ _id: -1 }) // Sort by newest first (descending order)
     .skip(skip)
     .limit(limit)
     .then(memes => {
