@@ -6,8 +6,7 @@ import WebApp from '@twa-dev/sdk';
 import {
   MainButton,
   SecondaryButton,
-  BottomBar,
-  BackButton
+  BottomBar
 } from '@twa-dev/sdk/react';
 
 import styles from './marketplace.module.css';
@@ -15,14 +14,14 @@ import styles from './marketplace.module.css';
 import { PopulatedMeme, PopulatedUser } from '../page-client';
 
 const POPULAR_TEMPLATES = [
-  { id: 'wifi', src: '/tags/pepe.png', alt: 'wifi' },
-  { id: 'elon', src: '/tags/cat.png', alt: 'elon' },
-  { id: 'crypto', src: '/tags/doge.png', alt: 'crypto' },
-  { id: 'trading', src: '/tags/rage.png', alt: 'trading' },
-  { id: 'ethereum', src: '/tags/troll.png', alt: 'ethereum' },
-  { id: 'pizza', src: '/tags/elon.png', alt: 'pizza' },
-  { id: 'frog', src: '/tags/yao.png', alt: 'frog' },
-  { id: 'bitcoin', src: '/tags/yao.png', alt: 'bitcoin' },
+  { id: 'wifi', src: '/tags/pepe.png' },
+  { id: 'elon', src: '/tags/cat.png' },
+  { id: 'crypto', src: '/tags/doge.png' },
+  { id: 'trading', src: '/tags/rage.png' },
+  { id: 'ethereum', src: '/tags/troll.png' },
+  { id: 'pizza', src: '/tags/elon.png' },
+  { id: 'frog', src: '/tags/yao.png' },
+  { id: 'bitcoin', src: '/tags/yao.png' },
 ];
 
 const ITEMS_PER_PAGE = 15;
@@ -199,16 +198,16 @@ export default function Marketplace({
           <div 
             key={template.id} 
             className={`${styles.templateItem} ${
-              selectedTags.includes(template.alt) ? styles.selected : 
+              selectedTags.includes(template.id) ? styles.selected : 
               selectedTags.length > 0 ? styles.dimmed : ''
             }`}
-            onClick={() => handleTemplateClick(template.alt)}
+            onClick={() => handleTemplateClick(template.id)}
             role="button"
             tabIndex={0}
           >
             <Image 
               src={template.src} 
-              alt={template.alt} 
+              alt={template.id} 
               width={40} 
               height={40} 
             />
