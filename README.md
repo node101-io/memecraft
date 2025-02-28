@@ -55,9 +55,13 @@ MemeCraft makes meme creation, minting, and collecting effortless—all within T
 
 ## Features
 ✔ **AI-Powered Meme Generation** – Create memes instantly with AI suggestions.
+
 ✔ **Seamless Telegram Mini App** – No need for external apps or websites.
+
 ✔ **One-Tap NFT Minting** – Easily mint memes on **a secure, decentralized rollup**.
+
 ✔ **Meme Collecting** – Own viral memes as NFTs and use them in your chat.
+
 ✔ **Zero Crypto Hassle** – No need to manage wallets—MemeCraft takes care of it.
 
 ## Our Experience with Chopin Framework
@@ -78,7 +82,9 @@ As a decentralized sovereign rollup, we chose not to compromise on user privacy 
 
 ### Solution: A Privacy-First, Mini App Experience
 ✅ **No Bots, No Intrusion** – We prioritized user privacy and opted to build MemeCraft as a **Telegram Mini App** instead of a bot, ensuring users can create memes without needing to add a bot to their personal chats.
+
 ✅ **Seamless & Fun** – Users can still quickly describe their meme or let AI suggest one, keeping the experience smooth and intuitive, without the friction of bot permissions.
+
 ✅ **Gossip-Friendly Design** – Whether you're spilling tea with your best friend or having a private conversation, MemeCraft stays out of your chat—so you can meme freely without an AI bot lurking in the background.
 
 This decision keeps MemeCraft **fun, lightweight, and privacy-friendly**, ensuring effortless meme creation without disrupting personal conversations.
@@ -104,7 +110,7 @@ During development, we encountered an unexpected platform-specific limitation—
 This was a significant usability issue because the button works flawlessly on **Telegram Web** and **Android**, but on iOS, users couldn't easily access the MemeCraft web app directly from inline query results.
 
 #### Solution: Reporting & Seeking a Fix
-✅ Opened an Official Issue – We documented and reported the issue to Telegram’s development team to seek a resolution. (You can track the issue [here](#https://github.com/TelegramMessenger/Telegram-iOS/issues/1687))
+✅ Opened an Official Issue – We documented and reported the issue to Telegram’s development team to seek a resolution. (You can track the issue [here](https://github.com/TelegramMessenger/Telegram-iOS/issues/1687))
 
 By staying proactive, we aim to ensure seamless meme creation across all Telegram platforms, delivering the same frictionless experience to iOS, Android, and Web users alike. 🚀
 
@@ -144,4 +150,5 @@ Telegram:
 [@necipsagiro](https://t.me/necipsagiro) | [@hatunozcn](https://t.me/hatunozcn) | [@yakupaltay](https://t.me/yakupaltay)
 
 🧘‍♀️ **Ready to Meme? Start Now!**
+
 Type `@craftmemebot` in Telegram and start creating!
