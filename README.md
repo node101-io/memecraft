@@ -8,6 +8,13 @@
   - [Mint Your Meme as an NFT](#mint-your-meme-as-an-nft)
   - [Collect Memes](#collect-memes)
   - [Have Fun & Be Part of the Internet Culture](#have-fun--be-part-of-the-internet-culture)
+- [Business Model](#business-model)
+  - [Current Model](#current-model)
+    - [Minting & Revenue Split](#minting--revenue-split)
+  - [Future Plannings](#future-plannings)
+    - [Premium Subscription](#premium-subscription)
+    - [TIA Token Bridging for Meme Minting](#tia-token-bridging-for-meme-minting)
+    - [Social Sharing & Integration](#social-sharing--integration)
 - [Features](#features)
 - [Our Experience with Chopin Framework](#our-experience-with-chopin-framework)
 - [Challenges & Solutions](#challenges--solutions)
@@ -53,6 +60,35 @@ MemeCraft makes meme creation, minting, and collecting effortless—all within T
 - Use memes because words are overrated, make them go viral, and leave your mark on meme history.
 - Collect rare memes and own a piece of the Internet culture.
 - **Create. Mint. Collect. Repeat.** 😎
+
+## Business Model
+MemeCraft is a free-to-use meme creation platform where users can generate, mint, and share memes without any upfront cost. When a new user joins, a wallet with **10 $MEME tokens** is automatically created and funded, allowing them to start using the platform immediately.
+
+To sustain the ecosystem, we’ve implemented a simple financial model that rewards creators while keeping operations running.
+
+### Current Model
+- Users receive **10 $MEME** upon signup.
+- They can generate **5 memes for free per day**.
+- After that, each meme costs **1 $MEME** to cover AI processing costs.
+
+#### Minting & Revenue Split
+When a meme is minted and reused, both the creator and the platform benefit:
+- **Creator Payout**: 0.95 $MEME (95%)
+- **Platform Commissio**n: 0.05 $MEME (5%)
+
+### Future Plannings
+
+#### Premium Subscription
+- Users can **subscribe** to remove the **5 meme/day limit** for unlimited meme generation.
+- Subscription can be paid using **$MEME** tokens or **$TIA** tokens (once [bridging](https://chopin.sh/docs/guides/token#bridging) is available).
+
+#### TIA Token Bridging for Meme Minting
+- Once [Chopin’s bridge](https://chopin.sh/docs/guides/token#bridging) is live, users will be able to bridge TIA tokens to mint memes on MemeCraft.
+- This will allow Stargaze and Cosmos ecosystem users to participate easily, driving the meme culture OGs of Cosmos to MemeCraft.
+
+#### Social Sharing & Integration
+- One click meme sharing to **Twitter, Discord, and Whatsapp** in addition to the current implementation on Telegram.
+- Possible Stargaze and Cosmos integrations for **cross-platform exposure**.
 
 ## Features
 ✔ **AI-Powered Meme Generation** – Create memes instantly with AI suggestions.
