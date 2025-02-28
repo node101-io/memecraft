@@ -27,6 +27,7 @@ MemeCraft leverages the Chopin Framework to enhance security and decentralizatio
 Beyond just fun creation users can mint their memes as NFTs and others can collect them. MemeCraft allows creators to earn recognition for their viral content, while collectors can own exclusive meme NFTs. Whether you’re a meme master or a seasoned collector, MemeCraft makes it easy to unleash your creativity and reap the rewards of going viral.
 
 ## System Architecture
+![image](https://github.com/user-attachments/assets/09047e43-4869-43d2-aba0-c4f5056209a5)
 - **Telegram Mini App**: MemeCraft operates within Telegram, allowing seamless user interaction in any chat.
 - **AI-Powered Meme Generation**: AI suggests meme captions or formats based on user input.
 - **NFT Minting & Collecting**: Users can mint memes as NFTs and collect them. Meme hard, mint harder!
